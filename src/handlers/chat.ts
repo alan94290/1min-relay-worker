@@ -5,6 +5,8 @@
 import { Env, ChatCompletionRequest } from '../types';
 import { OneMinApiService } from '../services';
 import { calculateTokens, generateUUID, extractImageFromContent, createErrorResponse, createSuccessResponse } from '../utils';
+import { TranslationLogger, logRequestDetails } from '../utils/logger';
+import { TextChunker, SubtitleChunker, TextChunk } from '../utils/chunking';
 import { ALL_ONE_MIN_AVAILABLE_MODELS, DEFAULT_MODEL } from '../constants';
 
 export class ChatHandler {
@@ -27,7 +29,14 @@ export class ChatHandler {
   }
 
   async handleChatCompletionsWithBody(requestBody: ChatCompletionRequest, apiKey: string): Promise<Response> {
+    const requestId = generateUUID();
+    
     try {
+      // Log request details
+      console.log(`[REQUEST-DETAILS] POST /v1/chat/completions`);
+      console.log(`[REQUEST-CONTENT] Messages: ${requestBody.messages?.length || 0}`);
+      console.log(`[REQUEST-CONTENT] Model: ${requestBody.model || 'default'}, Stream: ${requestBody.stream || false}`);
+      
       // Validate required fields
       if (!requestBody.messages || !Array.isArray(requestBody.messages)) {
         return createErrorResponse('Messages field is required and must be an array');
@@ -41,17 +50,34 @@ export class ChatHandler {
         return createErrorResponse(`Model '${model}' is not supported`);
       }
 
+      // Calculate total text length for logging
+      const totalTextLength = requestBody.messages
+        .map(msg => typeof msg.content === 'string' ? msg.content.length : 0)
+        .reduce((sum, len) => sum + len, 0);
+      
+      // Start translation logging
+      TranslationLogger.startTranslation(requestId, totalTextLength, model);
+      
+      // Check if text is too long and needs chunking
+      const shouldChunk = totalTextLength > 2000;
+      
+      if (shouldChunk) {
+        console.log(`[CHUNKING] Request ${requestId} - Text length ${totalTextLength} exceeds limit, chunking enabled`);
+        return this.handleChunkedTranslation(requestBody, model, apiKey, requestId);
+      }
+
       // Process messages and extract images if any
       const processedMessages = this.processMessages(requestBody.messages);
       
       // Handle streaming vs non-streaming
       if (requestBody.stream) {
-        return this.handleStreamingChat(processedMessages, model, requestBody.temperature, requestBody.max_tokens, apiKey);
+        return this.handleStreamingChat(processedMessages, model, requestBody.temperature, requestBody.max_tokens, apiKey, requestId);
       } else {
-        return this.handleNonStreamingChat(processedMessages, model, requestBody.temperature, requestBody.max_tokens, apiKey);
+        return this.handleNonStreamingChat(processedMessages, model, requestBody.temperature, requestBody.max_tokens, apiKey, requestId);
       }
     } catch (error) {
       console.error('Chat completion error:', error);
+      TranslationLogger.failTranslation(requestId, error instanceof Error ? error.message : 'Unknown error');
       return createErrorResponse('Internal server error', 500);
     }
   }
@@ -86,7 +112,8 @@ export class ChatHandler {
     model: string, 
     temperature?: number, 
     maxTokens?: number,
-    apiKey?: string
+    apiKey?: string,
+    requestId?: string
   ): Promise<Response> {
     const requestBody = this.apiService.buildChatRequestBody(messages, model, temperature, maxTokens);
     
@@ -96,9 +123,18 @@ export class ChatHandler {
       
       // Transform response to OpenAI format
       const openAIResponse = this.transformToOpenAIFormat(data, model);
+      
+      // Log completion
+      if (requestId) {
+        TranslationLogger.completeTranslation(requestId);
+      }
+      
       return createSuccessResponse(openAIResponse);
     } catch (error) {
       console.error('Non-streaming chat error:', error);
+      if (requestId) {
+        TranslationLogger.failTranslation(requestId, error instanceof Error ? error.message : 'Unknown error');
+      }
       return createErrorResponse('Failed to process chat completion', 500);
     }
   }
@@ -108,7 +144,8 @@ export class ChatHandler {
     model: string, 
     temperature?: number, 
     maxTokens?: number,
-    apiKey?: string
+    apiKey?: string,
+    requestId?: string
   ): Promise<Response> {
     const requestBody = this.apiService.buildStreamingChatRequestBody(messages, model, temperature, maxTokens);
     
@@ -183,8 +220,16 @@ export class ChatHandler {
           await writer.write(new TextEncoder().encode(`data: ${JSON.stringify(finalChunk)}\n\n`));
           await writer.write(new TextEncoder().encode("data: [DONE]\n\n"));
           await writer.close();
+          
+          // Log completion
+          if (requestId) {
+            TranslationLogger.completeTranslation(requestId);
+          }
         } catch (error) {
           console.error('Streaming error:', error);
+          if (requestId) {
+            TranslationLogger.failTranslation(requestId, error instanceof Error ? error.message : 'Unknown error');
+          }
           await writer.abort(error);
         }
       })();
@@ -201,8 +246,128 @@ export class ChatHandler {
       });
     } catch (error) {
       console.error('Streaming chat error:', error);
+      if (requestId) {
+        TranslationLogger.failTranslation(requestId, error instanceof Error ? error.message : 'Unknown error');
+      }
       return createErrorResponse('Failed to process streaming chat completion', 500);
     }
+  }
+
+  /**
+   * Handle large translation requests by chunking them
+   */
+  private async handleChunkedTranslation(
+    requestBody: ChatCompletionRequest,
+    model: string,
+    apiKey: string,
+    requestId: string
+  ): Promise<Response> {
+    try {
+      // Extract text content from messages
+      const textContent = requestBody.messages
+        .map(msg => typeof msg.content === 'string' ? msg.content : '')
+        .join(' ');
+      
+      // Determine if this looks like subtitles
+      const isSubtitles = this.detectSubtitles(textContent);
+      
+      // Choose appropriate chunking strategy
+      const chunks = isSubtitles 
+        ? SubtitleChunker.chunkSubtitles(textContent, 1500)
+        : TextChunker.chunkText(textContent, 2000);
+      
+      console.log(`[CHUNKING] Processing ${chunks.length} chunks for request ${requestId}`);
+      
+      // Process chunks sequentially to avoid overwhelming the API
+      const translatedChunks: string[] = [];
+      
+      for (let i = 0; i < chunks.length; i++) {
+        const chunk = chunks[i];
+        console.log(`[CHUNKING] Processing chunk ${i + 1}/${chunks.length} (${chunk.content.length} chars)`);
+        
+        // Create a modified request for this chunk
+        const chunkRequest = {
+          ...requestBody,
+          messages: [{
+            role: 'user',
+            content: chunk.content
+          }]
+        };
+        
+        // Process this chunk
+        const chunkMessages = this.processMessages(chunkRequest.messages);
+        const response = await this.handleNonStreamingChat(
+          chunkMessages, 
+          model, 
+          requestBody.temperature, 
+          requestBody.max_tokens, 
+          apiKey
+        );
+        
+        if (!response.ok) {
+          throw new Error(`Chunk ${i + 1} failed with status ${response.status}`);
+        }
+        
+        const chunkResult = await response.json() as any;
+        const translatedText = chunkResult.choices?.[0]?.message?.content || '';
+        translatedChunks.push(translatedText);
+        
+        // Small delay between chunks to be respectful to the API
+        if (i < chunks.length - 1) {
+          await new Promise(resolve => setTimeout(resolve, 100));
+        }
+      }
+      
+      // Combine all translated chunks
+      const finalTranslation = translatedChunks.join(isSubtitles ? '\n\n' : ' ');
+      
+      // Create final response in OpenAI format
+      const openAIResponse = {
+        id: `chatcmpl-${generateUUID()}`,
+        object: 'chat.completion',
+        created: Math.floor(Date.now() / 1000),
+        model: model,
+        choices: [{
+          index: 0,
+          message: {
+            role: 'assistant',
+            content: finalTranslation
+          },
+          finish_reason: 'stop'
+        }],
+        usage: {
+          prompt_tokens: Math.floor(textContent.length / 4), // Rough estimate
+          completion_tokens: Math.floor(finalTranslation.length / 4),
+          total_tokens: Math.floor((textContent.length + finalTranslation.length) / 4)
+        }
+      };
+      
+      // Log successful completion
+      TranslationLogger.completeTranslation(requestId, chunks.length);
+      
+      return createSuccessResponse(openAIResponse);
+      
+    } catch (error) {
+      console.error('Chunked translation error:', error);
+      TranslationLogger.failTranslation(requestId, error instanceof Error ? error.message : 'Unknown error');
+      return createErrorResponse('Failed to process chunked translation', 500);
+    }
+  }
+  
+  /**
+   * Detect if text content looks like subtitles
+   */
+  private detectSubtitles(text: string): boolean {
+    // Look for common subtitle patterns
+    const subtitlePatterns = [
+      /\d{2}:\d{2}:\d{2}[,.]\d{3}/, // Timestamp format
+      /^\d+$/m, // Sequence numbers
+      /-->/, // SRT arrow
+      /<[^>]+>/, // HTML-like tags
+      /\[\w+\]/ // Bracket annotations
+    ];
+    
+    return subtitlePatterns.some(pattern => pattern.test(text));
   }
 
   private transformToOpenAIFormat(data: any, model: string): any {
