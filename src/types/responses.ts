@@ -25,7 +25,7 @@ export interface RateLimitRecord {
 }
 
 export interface RateLimitConfig {
-  windowMs: number;     // Time window (milliseconds)
-  maxRequests: number;  // Maximum requests
-  maxTokens?: number;   // Maximum tokens (optional)
+  windowMs: number; // Time window (milliseconds)
+  maxRequests: number; // Maximum requests
+  maxTokens?: number; // Maximum tokens (optional)
 }

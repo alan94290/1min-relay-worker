@@ -10,4 +10,8 @@ export interface Env {
 
   // KV Namespace for rate limiting
   RATE_LIMIT_STORE?: KVNamespace;
+
+  // Web search configuration (optional)
+  WEB_SEARCH_NUM_OF_SITE?: string;
+  WEB_SEARCH_MAX_WORD?: string;
 }
