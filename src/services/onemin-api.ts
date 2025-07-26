@@ -22,11 +22,13 @@ function extractTextFromContent(
 
   // Extract text from array content
   const textParts: string[] = [];
+  
   for (const item of content) {
     if (item.type === "text" && item.text) {
       textParts.push(item.text);
     }
   }
+  
   return textParts.join("\n");
 }
 
@@ -200,39 +202,43 @@ export class OneMinApiService {
     let hasImageRequests = false;
     let allImagesUploaded = true;
 
-    // Process messages to extract images and check for vision support
-    for (const message of messages || []) {
-      if (Array.isArray(message.content)) {
-        for (const item of message.content) {
-          if (item.type === "image_url" && item.image_url?.url) {
-            hasImageRequests = true;
+    // Collect unique image URLs from the latest message only
+    const uniqueImageUrls: Set<string> = new Set();
+    
+    // Only process images from the latest user message
+    const latestMessage = messages && messages.length > 0 ? messages[messages.length - 1] : null;
+    
+    if (latestMessage && Array.isArray(latestMessage.content)) {
+      for (const item of latestMessage.content) {
+        if (item.type === "image_url" && item.image_url?.url) {
+          hasImageRequests = true;
 
-            // Check if model supports vision inputs
-            if (!isVisionSupportedModel(model)) {
-              throw new Error(`Model '${model}' does not support image inputs`);
-            }
-
-            try {
-              // Process and upload image
-              console.log(
-                "Processing image URL:",
-                item.image_url.url.substring(0, 50) + "...",
-              );
-              const imageData = await processImageUrl(item.image_url.url);
-              console.log("Image data processed, size:", imageData.byteLength);
-              const imagePath = await uploadImageToAsset(
-                imageData,
-                apiKey,
-                this.env.ONE_MIN_ASSET_URL,
-              );
-              console.log("Image uploaded successfully, path:", imagePath);
-              imagePaths.push(imagePath);
-            } catch (error) {
-              console.error("Error processing image:", error);
-              allImagesUploaded = false;
-              // Continue processing other images
-            }
+          // Check if model supports vision inputs
+          if (!isVisionSupportedModel(model)) {
+            throw new Error(`Model '${model}' does not support image inputs`);
           }
+
+          // Add to unique set to avoid duplicates
+          uniqueImageUrls.add(item.image_url.url);
+        }
+      }
+    }
+
+    // Process unique images in parallel if any exist
+    if (uniqueImageUrls.size > 0) {
+      console.log(`Processing ${uniqueImageUrls.size} unique images in parallel`);
+      const imageProcessingPromises = Array.from(uniqueImageUrls).map(url => 
+        this.processImageAsync(url, apiKey)
+      );
+      
+      const results = await Promise.allSettled(imageProcessingPromises);
+      
+      for (const result of results) {
+        if (result.status === 'fulfilled' && result.value) {
+          imagePaths.push(result.value);
+        } else {
+          console.error("Image processing failed:", result.status === 'rejected' ? result.reason : 'Unknown error');
+          allImagesUploaded = false;
         }
       }
     }
@@ -244,6 +250,7 @@ export class OneMinApiService {
       hasImageRequests,
       allImagesUploaded,
       imagePathsCount: imagePaths.length,
+      imagePaths: imagePaths,
       requestType:
         hasImageRequests && allImagesUploaded && imagePaths.length > 0
           ? "CHAT_WITH_IMAGE"
@@ -252,9 +259,13 @@ export class OneMinApiService {
 
     // Only use CHAT_WITH_IMAGE if we have image requests AND all images were successfully uploaded
     if (hasImageRequests && allImagesUploaded && imagePaths.length > 0) {
+      // For image requests, use only the latest user message to avoid confusion
+      const latestMessage = messages[messages.length - 1];
+      const latestMessageText = latestMessage ? extractTextFromContent(latestMessage.content) : "";
+      
       const promptObject: any = {
-        prompt: formattedHistory,
-        isMixed: false,
+        prompt: latestMessageText,
+        isMixed: true,
         imageList: imagePaths,
       };
 
@@ -265,11 +276,14 @@ export class OneMinApiService {
         promptObject.maxWord = webSearchConfig.maxWord;
       }
 
-      return {
+      const requestBody = {
         type: "CHAT_WITH_IMAGE",
         model: model,
         promptObject,
       };
+      
+      console.log("Final CHAT_WITH_IMAGE request body:", JSON.stringify(requestBody, null, 2));
+      return requestBody;
     } else {
       const promptObject: any = {
         prompt: formattedHistory,
@@ -304,33 +318,43 @@ export class OneMinApiService {
     let hasImageRequests = false;
     let allImagesUploaded = true;
 
-    // Process messages to extract images and check for vision support
-    for (const message of messages || []) {
-      if (Array.isArray(message.content)) {
-        for (const item of message.content) {
-          if (item.type === "image_url" && item.image_url?.url) {
-            hasImageRequests = true;
+    // Collect unique image URLs from the latest message only
+    const uniqueImageUrls: Set<string> = new Set();
+    
+    // Only process images from the latest user message
+    const latestMessage = messages && messages.length > 0 ? messages[messages.length - 1] : null;
+    
+    if (latestMessage && Array.isArray(latestMessage.content)) {
+      for (const item of latestMessage.content) {
+        if (item.type === "image_url" && item.image_url?.url) {
+          hasImageRequests = true;
 
-            // Check if model supports vision inputs
-            if (!isVisionSupportedModel(model)) {
-              throw new Error(`Model '${model}' does not support image inputs`);
-            }
-
-            try {
-              // Process and upload image
-              const imageData = await processImageUrl(item.image_url.url);
-              const imagePath = await uploadImageToAsset(
-                imageData,
-                apiKey,
-                this.env.ONE_MIN_ASSET_URL,
-              );
-              imagePaths.push(imagePath);
-            } catch (error) {
-              console.error("Error processing image:", error);
-              allImagesUploaded = false;
-              // Continue processing other images
-            }
+          // Check if model supports vision inputs
+          if (!isVisionSupportedModel(model)) {
+            throw new Error(`Model '${model}' does not support image inputs`);
           }
+
+          // Add to unique set to avoid duplicates
+          uniqueImageUrls.add(item.image_url.url);
+        }
+      }
+    }
+
+    // Process unique images in parallel if any exist
+    if (uniqueImageUrls.size > 0) {
+      console.log(`Processing ${uniqueImageUrls.size} unique images in parallel (streaming)`);
+      const imageProcessingPromises = Array.from(uniqueImageUrls).map(url => 
+        this.processImageAsync(url, apiKey)
+      );
+      
+      const results = await Promise.allSettled(imageProcessingPromises);
+      
+      for (const result of results) {
+        if (result.status === 'fulfilled' && result.value) {
+          imagePaths.push(result.value);
+        } else {
+          console.error("Image processing failed:", result.status === 'rejected' ? result.reason : 'Unknown error');
+          allImagesUploaded = false;
         }
       }
     }
@@ -340,9 +364,13 @@ export class OneMinApiService {
 
     // Only use CHAT_WITH_IMAGE if we have image requests AND all images were successfully uploaded
     if (hasImageRequests && allImagesUploaded && imagePaths.length > 0) {
+      // For image requests, use only the latest user message to avoid confusion
+      const latestMessage = messages[messages.length - 1];
+      const latestMessageText = latestMessage ? extractTextFromContent(latestMessage.content) : "";
+      
       const promptObject: any = {
-        prompt: formattedHistory,
-        isMixed: false,
+        prompt: latestMessageText,
+        isMixed: true,
         imageList: imagePaths,
       };
 
@@ -353,11 +381,14 @@ export class OneMinApiService {
         promptObject.maxWord = webSearchConfig.maxWord;
       }
 
-      return {
+      const requestBody = {
         type: "CHAT_WITH_IMAGE",
         model: model,
         promptObject,
       };
+      
+      console.log("Final CHAT_WITH_IMAGE request body:", JSON.stringify(requestBody, null, 2));
+      return requestBody;
     } else {
       const promptObject: any = {
         prompt: formattedHistory,
@@ -376,6 +407,30 @@ export class OneMinApiService {
         model: model,
         promptObject,
       };
+    }
+  }
+
+  private async processImageAsync(
+    imageUrl: string,
+    apiKey: string,
+  ): Promise<string | null> {
+    try {
+      console.log(
+        "Processing image URL:",
+        imageUrl.substring(0, 50) + "...",
+      );
+      const imageData = await processImageUrl(imageUrl);
+      console.log("Image data processed, size:", imageData.byteLength);
+      const imagePath = await uploadImageToAsset(
+        imageData,
+        apiKey,
+        this.env.ONE_MIN_ASSET_URL,
+      );
+      console.log("Image uploaded successfully, path:", imagePath);
+      return imagePath;
+    } catch (error) {
+      console.error("Error processing image:", error);
+      return null;
     }
   }
 

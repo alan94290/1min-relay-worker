@@ -74,7 +74,11 @@ export async function processImageUrl(imageUrl: string): Promise<ArrayBuffer> {
     return bytes.buffer;
   } else {
     // Handle HTTP URL (matching Python logic: requests.get().content)
-    const response = await fetch(imageUrl);
+    const response = await fetch(imageUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (compatible; 1min-relay-worker/1.0; +https://1min.ai)',
+      }
+    });
     if (!response.ok) {
       throw new Error(
         `Failed to fetch image: ${response.status} ${response.statusText}`,

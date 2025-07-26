@@ -22,6 +22,7 @@ export interface OneMinImageResponse {
 export interface RateLimitRecord {
   timestamps: number[];
   tokenCount: number;
+  windowStart?: number;
 }
 
 export interface RateLimitConfig {

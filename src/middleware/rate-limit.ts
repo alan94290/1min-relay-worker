@@ -32,20 +32,33 @@ export class RateLimiter {
       const existingRecord = await this.env.RATE_LIMIT_STORE.get(clientId);
       let record: RateLimitRecord = existingRecord
         ? JSON.parse(existingRecord)
-        : { timestamps: [], tokenCount: 0 };
+        : { timestamps: [], tokenCount: 0, windowStart: now };
 
-      // Filter out timestamps outside the current window
-      record.timestamps = record.timestamps.filter(
-        (timestamp) => timestamp > windowStart,
-      );
+      // Check if we need to reset the window
+      const needsReset = !record.windowStart || (now - record.windowStart) >= this.config.windowMs;
+      
+      if (needsReset) {
+        // Reset counters for new window
+        record = {
+          timestamps: [],
+          tokenCount: 0,
+          windowStart: now
+        };
+      } else {
+        // Clean up old timestamps (only keep current window)
+        record.timestamps = record.timestamps.filter(
+          (timestamp) => timestamp > windowStart,
+        );
+      }
 
       // Check request count limit
       if (record.timestamps.length >= this.config.maxRequests) {
+        const retryAfter = Math.ceil((record.windowStart + this.config.windowMs - now) / 1000);
         return {
           allowed: false,
-          response: createErrorResponse(
+          response: this.createRateLimitResponse(
             `Rate limit exceeded. Maximum ${this.config.maxRequests} requests per minute allowed.`,
-            429,
+            retryAfter
           ),
         };
       }
@@ -55,27 +68,23 @@ export class RateLimiter {
         this.config.maxTokens &&
         record.tokenCount + tokenCount > this.config.maxTokens
       ) {
+        const retryAfter = Math.ceil((record.windowStart + this.config.windowMs - now) / 1000);
         return {
           allowed: false,
-          response: createErrorResponse(
+          response: this.createRateLimitResponse(
             `Token rate limit exceeded. Maximum ${this.config.maxTokens} tokens per minute allowed.`,
-            429,
+            retryAfter
           ),
         };
       }
 
-      // Update record
+      // Update record efficiently
       record.timestamps.push(now);
-      record.tokenCount = record.tokenCount + tokenCount;
+      record.tokenCount += tokenCount;
 
-      // Reset token count if we're starting a new window
-      if (record.timestamps.length === 1) {
-        record.tokenCount = tokenCount;
-      }
-
-      // Store updated record with TTL
+      // Store updated record with proper TTL
       await this.env.RATE_LIMIT_STORE.put(clientId, JSON.stringify(record), {
-        expirationTtl: Math.ceil(this.config.windowMs / 1000) + 10,
+        expirationTtl: Math.ceil(this.config.windowMs / 1000) + 60, // Extra buffer
       });
 
       return { allowed: true };
@@ -84,6 +93,27 @@ export class RateLimiter {
       // On error, allow the request to proceed
       return { allowed: true };
     }
+  }
+
+  private createRateLimitResponse(message: string, retryAfter: number): Response {
+    return new Response(
+      JSON.stringify({
+        error: {
+          message,
+          type: "rate_limit_error",
+          param: null,
+          code: "rate_limit_exceeded",
+        },
+      }),
+      {
+        status: 429,
+        headers: {
+          "Content-Type": "application/json",
+          "Retry-After": retryAfter.toString(),
+          "X-RateLimit-Remaining": "0",
+        },
+      }
+    );
   }
 
   private getClientId(request: Request): string {

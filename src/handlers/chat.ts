@@ -238,14 +238,14 @@ export class ChatHandler {
       // Start streaming process (don't await, let it run in background)
       (async () => {
         try {
-          let allChunks = "";
+          const decoder = new TextDecoder();
+          const encoder = new TextEncoder();
 
           while (true) {
             const { done, value } = await reader.read();
             if (done) break;
 
-            const chunk = new TextDecoder().decode(value);
-            allChunks += chunk;
+            const chunk = decoder.decode(value);
 
             // Format chunk as OpenAI SSE
             const returnChunk = {
@@ -265,7 +265,7 @@ export class ChatHandler {
             };
 
             await writer.write(
-              new TextEncoder().encode(
+              encoder.encode(
                 `data: ${JSON.stringify(returnChunk)}\n\n`,
               ),
             );
@@ -287,9 +287,9 @@ export class ChatHandler {
           };
 
           await writer.write(
-            new TextEncoder().encode(`data: ${JSON.stringify(finalChunk)}\n\n`),
+            encoder.encode(`data: ${JSON.stringify(finalChunk)}\n\n`),
           );
-          await writer.write(new TextEncoder().encode("data: [DONE]\n\n"));
+          await writer.write(encoder.encode("data: [DONE]\n\n"));
           await writer.close();
         } catch (error) {
           console.error("Streaming error:", error);
