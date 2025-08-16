@@ -39,7 +39,8 @@ function getClientId(request: Request): string {
 
   const xForwardedFor = request.headers.get("X-Forwarded-For");
   if (xForwardedFor) {
-    return `ip:${xForwardedFor.split(",")[0].trim()}`;
+    const firstIp = xForwardedFor.split(",")[0];
+    return firstIp ? `ip:${firstIp.trim()}` : "anonymous";
   }
 
   return "anonymous";

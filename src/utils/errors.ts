@@ -75,11 +75,13 @@ export function toOpenAIError(error: unknown): {
   code: string | null;
   status: number;
 } {
-  if (error instanceof ValidationError ||
-      error instanceof AuthenticationError ||
-      error instanceof RateLimitError ||
-      error instanceof ModelNotFoundError ||
-      error instanceof ApiError) {
+  if (
+    error instanceof ValidationError ||
+    error instanceof AuthenticationError ||
+    error instanceof RateLimitError ||
+    error instanceof ModelNotFoundError ||
+    error instanceof ApiError
+  ) {
     return {
       message: error.message,
       type: error.type,

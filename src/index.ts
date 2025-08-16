@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import { HonoEnv } from "./types/hono";
 import { corsMiddleware } from "./middleware/cors";
 import { errorHandler } from "./middleware/error-handler";
+// Logger middleware removed for production
 import rootRoutes from "./routes/root";
 import apiRoutes from "./routes/api";
 
@@ -23,7 +24,7 @@ app.onError((err, c) => {
         code: "internal_error",
       },
     },
-    500,
+    500
   );
 });
 

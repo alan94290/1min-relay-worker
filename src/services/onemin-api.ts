@@ -2,7 +2,16 @@
  * 1min.ai API service layer
  */
 
-import { Env, OneMinImageResponse } from "../types";
+import {
+  Env,
+  OneMinImageResponse,
+  Message,
+  MessageContent,
+  TextContent,
+  ImageContent,
+  OneMinRequestBody,
+  OneMinPromptObject,
+} from "../types";
 import {
   processImageUrl,
   uploadImageToAsset,
@@ -14,7 +23,7 @@ import { WebSearchConfig } from "../utils/model-parser";
 function extractTextFromContent(
   content:
     | string
-    | Array<{ type: string; text?: string; image_url?: { url: string } }>,
+    | Array<{ type: string; text?: string; image_url?: { url: string } }>
 ): string {
   if (typeof content === "string") {
     return content;
@@ -22,13 +31,13 @@ function extractTextFromContent(
 
   // Extract text from array content
   const textParts: string[] = [];
-  
+
   for (const item of content) {
     if (item.type === "text" && item.text) {
       textParts.push(item.text);
     }
   }
-  
+
   return textParts.join("\n");
 }
 
@@ -36,7 +45,7 @@ function extractTextFromContent(
 // Converts message array to format expected by 1min.ai API
 function formatConversationHistory(
   messages: any[],
-  newInput: string = "",
+  newInput: string = ""
 ): string {
   let formattedHistory = "";
 
@@ -69,9 +78,9 @@ export class OneMinApiService {
   }
 
   async sendChatRequest(
-    requestBody: any,
+    requestBody: OneMinRequestBody,
     isStreaming: boolean = false,
-    apiKey?: string,
+    apiKey?: string
   ): Promise<Response> {
     const apiUrl = isStreaming
       ? this.env.ONE_MIN_CONVERSATION_API_STREAMING_URL
@@ -101,13 +110,13 @@ export class OneMinApiService {
             url: apiUrl,
             hasWebSearch: requestBody.promptObject?.webSearch,
             model: requestBody.model,
-          },
+          }
         );
 
         // If the error might be related to webSearch parameters, try graceful degradation
         if (response.status === 400 && requestBody.promptObject?.webSearch) {
           console.warn(
-            "Attempting graceful degradation: removing webSearch parameters",
+            "Attempting graceful degradation: removing webSearch parameters"
           );
           const fallbackRequestBody =
             this.createFallbackRequestBody(requestBody);
@@ -133,7 +142,7 @@ export class OneMinApiService {
         }
 
         throw new Error(
-          `1min.ai API error: ${response.status} ${response.statusText}`,
+          `1min.ai API error: ${response.status} ${response.statusText}`
         );
       }
 
@@ -144,7 +153,9 @@ export class OneMinApiService {
     }
   }
 
-  private createFallbackRequestBody(originalRequestBody: any): any {
+  private createFallbackRequestBody(
+    originalRequestBody: OneMinRequestBody
+  ): OneMinRequestBody {
     const fallbackBody = JSON.parse(JSON.stringify(originalRequestBody));
 
     // Remove webSearch related parameters
@@ -158,8 +169,8 @@ export class OneMinApiService {
   }
 
   async sendImageRequest(
-    requestBody: any,
-    apiKey?: string,
+    requestBody: OneMinRequestBody,
+    apiKey?: string
   ): Promise<OneMinImageResponse> {
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
@@ -176,12 +187,14 @@ export class OneMinApiService {
         method: "POST",
         headers,
         body: JSON.stringify(requestBody),
-      },
+      }
     );
 
     if (!response.ok) {
+      const errorData = await response.text();
+      console.error("=== 1MIN.AI API ERROR RESPONSE ===", errorData);
       throw new Error(
-        `1min.ai API error: ${response.status} ${response.statusText}`,
+        `1min.ai API error: ${response.status} ${response.statusText}`
       );
     }
 
@@ -190,24 +203,22 @@ export class OneMinApiService {
   }
 
   async buildChatRequestBody(
-    messages: any[],
+    messages: Message[],
     model: string,
     apiKey: string,
     temperature?: number,
     maxTokens?: number,
-    webSearchConfig?: WebSearchConfig,
+    webSearchConfig?: WebSearchConfig
   ): Promise<any> {
     // Process images and check for vision model support
     const imagePaths: string[] = [];
     let hasImageRequests = false;
     let allImagesUploaded = true;
 
-    // Collect unique image URLs from the latest message only
-    const uniqueImageUrls: Set<string> = new Set();
-    
-    // Only process images from the latest user message
-    const latestMessage = messages && messages.length > 0 ? messages[messages.length - 1] : null;
-    
+    // Only process images from the latest user message to avoid reprocessing
+    const latestMessage =
+      messages && messages.length > 0 ? messages[messages.length - 1] : null;
+
     if (latestMessage && Array.isArray(latestMessage.content)) {
       for (const item of latestMessage.content) {
         if (item.type === "image_url" && item.image_url?.url) {
@@ -218,27 +229,19 @@ export class OneMinApiService {
             throw new Error(`Model '${model}' does not support image inputs`);
           }
 
-          // Add to unique set to avoid duplicates
-          uniqueImageUrls.add(item.image_url.url);
-        }
-      }
-    }
-
-    // Process unique images in parallel if any exist
-    if (uniqueImageUrls.size > 0) {
-      console.log(`Processing ${uniqueImageUrls.size} unique images in parallel`);
-      const imageProcessingPromises = Array.from(uniqueImageUrls).map(url => 
-        this.processImageAsync(url, apiKey)
-      );
-      
-      const results = await Promise.allSettled(imageProcessingPromises);
-      
-      for (const result of results) {
-        if (result.status === 'fulfilled' && result.value) {
-          imagePaths.push(result.value);
-        } else {
-          console.error("Image processing failed:", result.status === 'rejected' ? result.reason : 'Unknown error');
-          allImagesUploaded = false;
+          try {
+            const imageData = await processImageUrl(item.image_url.url);
+            const imagePath = await uploadImageToAsset(
+              imageData,
+              apiKey,
+              this.env.ONE_MIN_ASSET_URL
+            );
+            imagePaths.push(imagePath);
+          } catch (error) {
+            console.error("Error processing image:", error);
+            allImagesUploaded = false;
+            // Continue processing other images
+          }
         }
       }
     }
@@ -246,26 +249,11 @@ export class OneMinApiService {
     // Format messages for the API call
     const formattedHistory = formatConversationHistory(messages, "");
 
-    console.log("Image processing summary:", {
-      hasImageRequests,
-      allImagesUploaded,
-      imagePathsCount: imagePaths.length,
-      imagePaths: imagePaths,
-      requestType:
-        hasImageRequests && allImagesUploaded && imagePaths.length > 0
-          ? "CHAT_WITH_IMAGE"
-          : "CHAT_WITH_AI",
-    });
-
     // Only use CHAT_WITH_IMAGE if we have image requests AND all images were successfully uploaded
     if (hasImageRequests && allImagesUploaded && imagePaths.length > 0) {
-      // For image requests, use only the latest user message to avoid confusion
-      const latestMessage = messages[messages.length - 1];
-      const latestMessageText = latestMessage ? extractTextFromContent(latestMessage.content) : "";
-      
-      const promptObject: any = {
-        prompt: latestMessageText,
-        isMixed: true,
+      const promptObject: OneMinPromptObject = {
+        prompt: formattedHistory,
+        isMixed: false,
         imageList: imagePaths,
       };
 
@@ -281,11 +269,10 @@ export class OneMinApiService {
         model: model,
         promptObject,
       };
-      
-      console.log("Final CHAT_WITH_IMAGE request body:", JSON.stringify(requestBody, null, 2));
+
       return requestBody;
     } else {
-      const promptObject: any = {
+      const promptObject: OneMinPromptObject = {
         prompt: formattedHistory,
         isMixed: false,
         webSearch: webSearchConfig ? webSearchConfig.webSearch : false,
@@ -306,24 +293,22 @@ export class OneMinApiService {
   }
 
   async buildStreamingChatRequestBody(
-    messages: any[],
+    messages: Message[],
     model: string,
     apiKey: string,
     temperature?: number,
     maxTokens?: number,
-    webSearchConfig?: WebSearchConfig,
+    webSearchConfig?: WebSearchConfig
   ): Promise<any> {
     // Process images and check for vision model support
     const imagePaths: string[] = [];
     let hasImageRequests = false;
     let allImagesUploaded = true;
 
-    // Collect unique image URLs from the latest message only
-    const uniqueImageUrls: Set<string> = new Set();
-    
-    // Only process images from the latest user message
-    const latestMessage = messages && messages.length > 0 ? messages[messages.length - 1] : null;
-    
+    // Only process images from the latest user message to avoid reprocessing
+    const latestMessage =
+      messages && messages.length > 0 ? messages[messages.length - 1] : null;
+
     if (latestMessage && Array.isArray(latestMessage.content)) {
       for (const item of latestMessage.content) {
         if (item.type === "image_url" && item.image_url?.url) {
@@ -334,27 +319,19 @@ export class OneMinApiService {
             throw new Error(`Model '${model}' does not support image inputs`);
           }
 
-          // Add to unique set to avoid duplicates
-          uniqueImageUrls.add(item.image_url.url);
-        }
-      }
-    }
-
-    // Process unique images in parallel if any exist
-    if (uniqueImageUrls.size > 0) {
-      console.log(`Processing ${uniqueImageUrls.size} unique images in parallel (streaming)`);
-      const imageProcessingPromises = Array.from(uniqueImageUrls).map(url => 
-        this.processImageAsync(url, apiKey)
-      );
-      
-      const results = await Promise.allSettled(imageProcessingPromises);
-      
-      for (const result of results) {
-        if (result.status === 'fulfilled' && result.value) {
-          imagePaths.push(result.value);
-        } else {
-          console.error("Image processing failed:", result.status === 'rejected' ? result.reason : 'Unknown error');
-          allImagesUploaded = false;
+          try {
+            const imageData = await processImageUrl(item.image_url.url);
+            const imagePath = await uploadImageToAsset(
+              imageData,
+              apiKey,
+              this.env.ONE_MIN_ASSET_URL
+            );
+            imagePaths.push(imagePath);
+          } catch (error) {
+            console.error("Error processing image:", error);
+            allImagesUploaded = false;
+            // Continue processing other images
+          }
         }
       }
     }
@@ -364,13 +341,9 @@ export class OneMinApiService {
 
     // Only use CHAT_WITH_IMAGE if we have image requests AND all images were successfully uploaded
     if (hasImageRequests && allImagesUploaded && imagePaths.length > 0) {
-      // For image requests, use only the latest user message to avoid confusion
-      const latestMessage = messages[messages.length - 1];
-      const latestMessageText = latestMessage ? extractTextFromContent(latestMessage.content) : "";
-      
-      const promptObject: any = {
-        prompt: latestMessageText,
-        isMixed: true,
+      const promptObject: OneMinPromptObject = {
+        prompt: formattedHistory,
+        isMixed: false,
         imageList: imagePaths,
       };
 
@@ -386,11 +359,10 @@ export class OneMinApiService {
         model: model,
         promptObject,
       };
-      
-      console.log("Final CHAT_WITH_IMAGE request body:", JSON.stringify(requestBody, null, 2));
+
       return requestBody;
     } else {
-      const promptObject: any = {
+      const promptObject: OneMinPromptObject = {
         prompt: formattedHistory,
         isMixed: false,
         webSearch: webSearchConfig ? webSearchConfig.webSearch : false,
@@ -410,36 +382,12 @@ export class OneMinApiService {
     }
   }
 
-  private async processImageAsync(
-    imageUrl: string,
-    apiKey: string,
-  ): Promise<string | null> {
-    try {
-      console.log(
-        "Processing image URL:",
-        imageUrl.substring(0, 50) + "...",
-      );
-      const imageData = await processImageUrl(imageUrl);
-      console.log("Image data processed, size:", imageData.byteLength);
-      const imagePath = await uploadImageToAsset(
-        imageData,
-        apiKey,
-        this.env.ONE_MIN_ASSET_URL,
-      );
-      console.log("Image uploaded successfully, path:", imagePath);
-      return imagePath;
-    } catch (error) {
-      console.error("Error processing image:", error);
-      return null;
-    }
-  }
-
   buildImageRequestBody(
     prompt: string,
     model: string,
     n?: number,
-    size?: string,
-  ): any {
+    size?: string
+  ): OneMinRequestBody {
     return {
       type: "IMAGE_GENERATOR",
       model: model,

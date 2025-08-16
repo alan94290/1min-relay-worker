@@ -12,7 +12,7 @@ import {
 export const errorHandler = createMiddleware<HonoEnv>(async (c, next) => {
   try {
     await next();
-  } catch (error: any) {
+  } catch (error) {
     console.error("Request error:", {
       error: error,
       message: error instanceof Error ? error.message : String(error),
@@ -24,7 +24,7 @@ export const errorHandler = createMiddleware<HonoEnv>(async (c, next) => {
 
     // Use the unified error handler for consistent OpenAI API format
     const errorData = toOpenAIError(error);
-    
+
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
     };
@@ -43,8 +43,8 @@ export const errorHandler = createMiddleware<HonoEnv>(async (c, next) => {
           code: errorData.code,
         },
       },
-      errorData.status,
-      headers,
+      errorData.status as any,
+      headers
     );
   }
 });

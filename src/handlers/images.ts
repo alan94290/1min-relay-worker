@@ -18,7 +18,7 @@ export class ImageHandler {
 
   async handleImageGeneration(
     request: Request,
-    apiKey?: string,
+    apiKey?: string
   ): Promise<Response> {
     try {
       const requestBody: ImageGenerationRequest = await request.json();
@@ -37,7 +37,7 @@ export class ImageHandler {
           `Model '${model}' does not support image generation`,
           400,
           "invalid_request_error",
-          "model_not_supported",
+          "model_not_supported"
         );
       }
 
@@ -45,21 +45,21 @@ export class ImageHandler {
         requestBody.prompt,
         model,
         requestBody.n,
-        requestBody.size,
+        requestBody.size
       );
 
       try {
         console.log(
           "Sending image request with body:",
-          JSON.stringify(requestBodyForAPI, null, 2),
+          JSON.stringify(requestBodyForAPI, null, 2)
         );
         const data = await this.apiService.sendImageRequest(
           requestBodyForAPI,
-          apiKey,
+          apiKey
         );
         console.log(
           "Received image API response:",
-          JSON.stringify(data, null, 2),
+          JSON.stringify(data, null, 2)
         );
 
         // Transform response to OpenAI format
@@ -74,14 +74,14 @@ export class ImageHandler {
             return createErrorResponse(
               `Image generation failed: ${error.message}`,
               500,
-              "api_error",
+              "api_error"
             );
           }
           if (error.message.includes("No image URLs found")) {
             return createErrorResponse(
               "Image generation completed but no images were returned",
               500,
-              "no_images_error",
+              "no_images_error"
             );
           }
         }
@@ -89,7 +89,7 @@ export class ImageHandler {
         return createErrorResponse(
           "Failed to generate image",
           500,
-          "internal_error",
+          "internal_error"
         );
       }
     } catch (error) {
@@ -100,7 +100,7 @@ export class ImageHandler {
 
   private transformToOpenAIFormat(
     data: any,
-    originalRequest: ImageGenerationRequest,
+    originalRequest: ImageGenerationRequest
   ): any {
     // Use resultObject from the API response (matching Python version)
     const imageUrls = data.aiRecord?.aiRecordDetail?.resultObject;

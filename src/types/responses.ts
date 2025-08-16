@@ -3,10 +3,17 @@
  */
 
 export interface OneMinResponse {
-  aiRecord: {
+  requestId?: string;
+  content?: string;
+  aiRecord?: {
     aiRecordDetail: {
       resultObject: string[];
     };
+  };
+  usage?: {
+    prompt_tokens: number;
+    completion_tokens: number;
+    total_tokens: number;
   };
 }
 

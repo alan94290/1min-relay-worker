@@ -133,7 +133,7 @@ export class ModelParser {
    */
   static parseAndGetConfig(
     modelName: string,
-    env?: any,
+    env?: any
   ): {
     cleanModel: string;
     webSearchConfig?: WebSearchConfig;

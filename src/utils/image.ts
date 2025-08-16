@@ -2,6 +2,8 @@
  * Image processing utilities
  */
 
+import { MessageContent, TextContent, ImageContent } from "../types";
+
 /**
  * Checks if URL is an image URL
  * @param url - URL to check
@@ -22,7 +24,9 @@ export function isImageUrl(url: string): boolean {
  * @param content - Message content that may contain images
  * @returns Image URL if found, null otherwise
  */
-export function extractImageFromContent(content: any): string | null {
+export function extractImageFromContent(
+  content: MessageContent
+): string | null {
   if (typeof content === "string") {
     return null;
   }
@@ -76,12 +80,13 @@ export async function processImageUrl(imageUrl: string): Promise<ArrayBuffer> {
     // Handle HTTP URL (matching Python logic: requests.get().content)
     const response = await fetch(imageUrl, {
       headers: {
-        'User-Agent': 'Mozilla/5.0 (compatible; 1min-relay-worker/1.0; +https://1min.ai)',
-      }
+        "User-Agent":
+          "Mozilla/5.0 (compatible; 1min-relay-worker/1.0; +https://1min.ai)",
+      },
     });
     if (!response.ok) {
       throw new Error(
-        `Failed to fetch image: ${response.status} ${response.statusText}`,
+        `Failed to fetch image: ${response.status} ${response.statusText}`
       );
     }
     return await response.arrayBuffer();
@@ -98,7 +103,7 @@ export async function processImageUrl(imageUrl: string): Promise<ArrayBuffer> {
 export async function uploadImageToAsset(
   imageData: ArrayBuffer,
   apiKey: string,
-  assetUrl: string,
+  assetUrl: string
 ): Promise<string> {
   const formData = new FormData();
   const filename = `relay${crypto.randomUUID()}`;
@@ -117,7 +122,7 @@ export async function uploadImageToAsset(
   if (!response.ok) {
     const errorText = await response.text();
     throw new Error(
-      `Failed to upload image: ${response.status} ${response.statusText} - ${errorText}`,
+      `Failed to upload image: ${response.status} ${response.statusText} - ${errorText}`
     );
   }
 
@@ -135,9 +140,11 @@ export async function uploadImageToAsset(
  * @param content - Mixed content array
  * @returns Combined text content
  */
-export function extractTextFromContent(content: any[]): string {
+export function extractTextFromContent(
+  content: (TextContent | ImageContent)[]
+): string {
   return content
-    .filter((item) => item.type === "text" && item.text)
+    .filter((item): item is TextContent => item.type === "text")
     .map((item) => item.text)
     .join("\n");
 }

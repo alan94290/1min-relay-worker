@@ -2,7 +2,6 @@
 
 ![GitHub package.json version](https://img.shields.io/github/package-json/v/7a6163/1min-relay-worker)
 
-
 A TypeScript implementation of the 1min.ai API relay service, designed to run on Cloudflare Workers with distributed rate limiting and accurate token counting.
 
 ## Features
@@ -19,7 +18,8 @@ A TypeScript implementation of the 1min.ai API relay service, designed to run on
 ## Supported Models
 
 ### Text Generation Models
-- **OpenAI**: o3-mini, o4-mini, gpt-4.5-preview, gpt-4.1, gpt-4.1-nano, gpt-4.1-mini, gpt-4o, gpt-4-turbo, gpt-3.5-turbo, and more
+
+- **OpenAI**: gpt-5, gpt-5-mini, gpt-5-nano, gpt-5-chat-latest, o1-pro, o1, o1-mini, o3-mini, o4-mini, gpt-4.5-preview, gpt-4.1, gpt-4.1-nano, gpt-4.1-mini, gpt-4o, gpt-4-turbo, gpt-3.5-turbo, and more
 - **Claude**: claude-3-5-sonnet, claude-3-5-haiku, claude-3-7-sonnet, claude-sonnet-4, claude-opus-4, claude-3-opus, claude-3-haiku
 - **MistralAI**: mistral-large-latest, mistral-small-latest, pixtral-12b
 - **GoogleAI**: gemini-1.5-pro, gemini-1.5-flash, gemini-2.0-flash, gemini-2.0-flash-lite, gemini-2.5-flash, gemini-2.5-pro, gemini-2.5-flash-preview-05-20, gemini-2.5-flash-preview-04-17, gemini-2.5-pro-preview-05-06
@@ -29,9 +29,11 @@ A TypeScript implementation of the 1min.ai API relay service, designed to run on
 - **Perplexity Sonar**: sonar-reasoning-pro, sonar-reasoning, sonar-pro, sonar
 
 ### Vision Models (Image Input Support)
-- **OpenAI**: gpt-4o, gpt-4o-mini, gpt-4-turbo
+
+- **OpenAI**: gpt-5, gpt-5-mini, gpt-5-chat-latest, gpt-4o, gpt-4o-mini, gpt-4-turbo
 
 ### Image Generation Models
+
 - **DALL-E**: dall-e-2, dall-e-3
 - **Midjourney**: midjourney, midjourney_6_1
 - **Leonardo.ai**: phoenix, lightning-xl, anime-xl, diffusion-xl, kino-xl, vision-xl, albedo-base-xl
@@ -39,22 +41,26 @@ A TypeScript implementation of the 1min.ai API relay service, designed to run on
 - **Stable Diffusion**: stable-diffusion-xl-1024-v1-0, stable-diffusion-v1-6
 
 ### Speech Models
+
 - **Speech-to-Text**: whisper-1
 - **Text-to-Speech**: tts-1, tts-1-hd
 
 ## API Endpoints
 
 ### Chat Completions
+
 ```
 POST /v1/chat/completions
 ```
 
 ### Responses (Structured Outputs)
+
 ```
 POST /v1/responses
 ```
 
 #### Vision Support Example
+
 ```bash
 curl -X POST http://localhost:8787/v1/chat/completions \
   -H "Content-Type: application/json" \
@@ -86,6 +92,7 @@ curl -X POST http://localhost:8787/v1/chat/completions \
 The Responses API supports structured outputs and reasoning control. It accepts two input formats:
 
 **Simple Input Format:**
+
 ```bash
 curl -X POST http://localhost:8787/v1/responses \
   -H "Content-Type: application/json" \
@@ -98,6 +105,7 @@ curl -X POST http://localhost:8787/v1/responses \
 ```
 
 **Messages Format (for conversations):**
+
 ```bash
 curl -X POST http://localhost:8787/v1/responses \
   -H "Content-Type: application/json" \
@@ -115,6 +123,7 @@ curl -X POST http://localhost:8787/v1/responses \
 ```
 
 **JSON Object Response:**
+
 ```bash
 curl -X POST http://localhost:8787/v1/responses \
   -H "Content-Type: application/json" \
@@ -130,6 +139,7 @@ curl -X POST http://localhost:8787/v1/responses \
 ```
 
 **JSON Schema Response:**
+
 ```bash
 curl -X POST http://localhost:8787/v1/responses \
   -H "Content-Type: application/json" \
@@ -159,6 +169,7 @@ curl -X POST http://localhost:8787/v1/responses \
 ```
 
 **Responses API Features:**
+
 - **Structured Outputs**: JSON objects and JSON schema validation
 - **Reasoning Effort**: Control reasoning depth (low, medium, high)
 - **Vision Support**: Same image input capabilities as Chat Completions
@@ -166,21 +177,25 @@ curl -X POST http://localhost:8787/v1/responses \
 - **Enhanced Prompting**: Automatically optimizes prompts for structured responses
 
 ### Image Generation
+
 ```
 POST /v1/images/generations
 ```
 
 ### List Models
+
 ```
 GET /v1/models
 ```
 
 ### Health Check
+
 ```
 GET /
 ```
 
 Returns information about all available endpoints:
+
 - Chat Completions: `/v1/chat/completions`
 - Responses: `/v1/responses`
 - Image Generation: `/v1/images/generations`
@@ -189,6 +204,7 @@ Returns information about all available endpoints:
 ## Rate Limiting
 
 The worker implements distributed rate limiting with the following limits:
+
 - **Requests per minute**: 60 per IP address
 - **Tokens per minute**: 10,000 per IP address
 
@@ -197,6 +213,7 @@ Rate limits are enforced using Cloudflare KV storage, ensuring consistency acros
 ## Setup
 
 ### Prerequisites
+
 - Node.js 18+
 - Wrangler CLI
 - Cloudflare account with Workers and KV enabled
@@ -204,17 +221,20 @@ Rate limits are enforced using Cloudflare KV storage, ensuring consistency acros
 ### Installation
 
 1. Clone the repository:
+
 ```bash
 git clone https://github.com/7a6163/1min-relay-worker.git
 cd 1min-relay-worker
 ```
 
 2. Install dependencies:
+
 ```bash
 npm install
 ```
 
 3. Configure environment variables in `wrangler.toml`:
+
 ```toml
 [env.production.vars]
 ONE_MIN_API_URL = "https://api.1min.ai/api/features"
@@ -223,8 +243,8 @@ ONE_MIN_CONVERSATION_API_STREAMING_URL = "https://api.1min.ai/api/features?isStr
 ONE_MIN_ASSET_URL = "https://api.1min.ai/api/assets"
 ```
 
-
 4. Create KV namespace for rate limiting:
+
 ```bash
 wrangler kv:namespace create "RATE_LIMIT_STORE"
 ```
@@ -243,6 +263,7 @@ wrangler kv:namespace create "RATE_LIMIT_STORE"
 ### Development
 
 Start the development server:
+
 ```bash
 npm run dev
 ```
@@ -260,11 +281,13 @@ The fastest way to deploy is using the Cloudflare Deploy button at the top of th
 1. Make sure you've completed all the setup steps above, including creating and configuring the KV namespace.
 
 2. Build the project:
+
 ```bash
 npm run build
 ```
 
 3. Deploy to Cloudflare Workers:
+
 ```bash
 npm run deploy
 ```
@@ -302,15 +325,18 @@ If you encounter issues during deployment:
 ## Configuration
 
 ### Environment Variables
+
 - `ONEMIN_CHAT_API_URL`: 1min.ai chat completions API endpoint
 - `ONEMIN_IMAGE_API_URL`: 1min.ai image generation API endpoint
 
 ### KV Namespace
+
 - `RATE_LIMIT_STORE`: Used for distributed rate limiting storage
 
 ## Usage Examples
 
 ### Chat Completion
+
 ```bash
 curl -X POST https://your-worker.your-subdomain.workers.dev/v1/chat/completions \
   -H "Content-Type: application/json" \
@@ -323,6 +349,7 @@ curl -X POST https://your-worker.your-subdomain.workers.dev/v1/chat/completions 
 ```
 
 ### Responses (Structured Output)
+
 ```bash
 curl -X POST https://your-worker.your-subdomain.workers.dev/v1/responses \
   -H "Content-Type: application/json" \
@@ -338,6 +365,7 @@ curl -X POST https://your-worker.your-subdomain.workers.dev/v1/responses \
 ```
 
 ### Image Generation
+
 ```bash
 curl -X POST https://your-worker.your-subdomain.workers.dev/v1/images/generations \
   -H "Content-Type: application/json" \
@@ -351,6 +379,7 @@ curl -X POST https://your-worker.your-subdomain.workers.dev/v1/images/generation
 ```
 
 ### Streaming Chat
+
 ```bash
 curl -X POST https://your-worker.your-subdomain.workers.dev/v1/chat/completions \
   -H "Content-Type: application/json" \
@@ -365,6 +394,7 @@ curl -X POST https://your-worker.your-subdomain.workers.dev/v1/chat/completions 
 ## Architecture
 
 The worker is built with:
+
 - **TypeScript**: For type safety and better development experience
 - **Cloudflare Workers**: Serverless edge computing platform
 - **Cloudflare KV**: Distributed key-value storage for rate limiting
@@ -373,6 +403,7 @@ The worker is built with:
 ## Rate Limiting Implementation
 
 The distributed rate limiting system:
+
 1. Uses IP address + endpoint as the key
 2. Tracks both request count and token count per minute
 3. Stores data in Cloudflare KV with TTL
@@ -398,6 +429,7 @@ MIT License - see LICENSE file for details
 ## Support
 
 For issues and questions:
+
 - Create an issue in the repository
 - Check the Cloudflare Workers documentation
 - Review the 1min.ai API documentation

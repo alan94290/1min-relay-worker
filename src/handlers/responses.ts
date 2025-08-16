@@ -43,7 +43,7 @@ export class ResponseHandler {
 
   async handleResponsesWithBody(
     requestBody: ResponseRequest,
-    apiKey: string,
+    apiKey: string
   ): Promise<Response> {
     try {
       // Validate required fields - support both input and messages formats
@@ -52,7 +52,7 @@ export class ResponseHandler {
         (!requestBody.messages || !Array.isArray(requestBody.messages))
       ) {
         return createErrorResponse(
-          'Either "input" field (string) or "messages" field (array) is required',
+          'Either "input" field (string) or "messages" field (array) is required'
         );
       }
 
@@ -81,7 +81,7 @@ export class ResponseHandler {
           parseResult.error,
           400,
           "invalid_request_error",
-          "model_not_found",
+          "model_not_found"
         );
       }
 
@@ -93,7 +93,7 @@ export class ResponseHandler {
           `The model '${cleanModel}' does not exist`,
           400,
           "invalid_request_error",
-          "model_not_found",
+          "model_not_found"
         );
       }
 
@@ -104,7 +104,7 @@ export class ResponseHandler {
           `Model '${cleanModel}' does not support image inputs`,
           400,
           "invalid_request_error",
-          "model_not_supported",
+          "model_not_supported"
         );
       }
 
@@ -120,7 +120,7 @@ export class ResponseHandler {
         requestBody.response_format,
         requestBody.reasoning_effort,
         apiKey,
-        webSearchConfig,
+        webSearchConfig
       );
     } catch (error) {
       console.error("Response error:", error);
@@ -182,14 +182,14 @@ export class ResponseHandler {
     responseFormat?: ResponseRequest["response_format"],
     reasoningEffort?: ResponseRequest["reasoning_effort"],
     apiKey?: string,
-    webSearchConfig?: WebSearchConfig,
+    webSearchConfig?: WebSearchConfig
   ): Promise<Response> {
     try {
       // Build the request body with enhanced prompting for structured responses
       const enhancedMessages = this.enhanceMessagesForStructuredResponse(
         messages,
         responseFormat,
-        reasoningEffort,
+        reasoningEffort
       );
 
       const requestBody = await this.apiService.buildChatRequestBody(
@@ -198,13 +198,13 @@ export class ResponseHandler {
         apiKey || "",
         temperature,
         maxTokens,
-        webSearchConfig,
+        webSearchConfig
       );
 
       const response = await this.apiService.sendChatRequest(
         requestBody,
         false,
-        apiKey,
+        apiKey
       );
       const data = await response.json();
 
@@ -212,7 +212,7 @@ export class ResponseHandler {
       const openAIResponse = this.transformToResponsesFormat(
         data,
         model,
-        responseFormat,
+        responseFormat
       );
       return createSuccessResponse(openAIResponse);
     } catch (error) {
@@ -224,7 +224,7 @@ export class ResponseHandler {
   private enhanceMessagesForStructuredResponse(
     messages: any[],
     responseFormat?: ResponseRequest["response_format"],
-    reasoningEffort?: ResponseRequest["reasoning_effort"],
+    reasoningEffort?: ResponseRequest["reasoning_effort"]
   ): any[] {
     const enhancedMessages = [...messages];
 
@@ -262,7 +262,7 @@ export class ResponseHandler {
 
       // Insert or update system message
       const systemMessageIndex = enhancedMessages.findIndex(
-        (msg) => msg.role === "system",
+        (msg) => msg.role === "system"
       );
       if (systemMessageIndex >= 0) {
         enhancedMessages[systemMessageIndex].content +=
@@ -281,7 +281,7 @@ export class ResponseHandler {
   private transformToResponsesFormat(
     data: any,
     model: string,
-    responseFormat?: ResponseRequest["response_format"],
+    responseFormat?: ResponseRequest["response_format"]
   ): any {
     const content =
       data.aiRecord?.aiRecordDetail?.resultObject?.[0] ||

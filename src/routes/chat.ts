@@ -6,11 +6,17 @@ import { createRateLimitMiddleware } from "../middleware/rate-limit-hono";
 import { calculateTokens } from "../utils";
 import { extractTextFromContent } from "../utils/image";
 import { ValidationError } from "../utils/errors";
+import {
+  ChatCompletionRequest,
+  Message,
+  TextContent,
+  ImageContent,
+} from "../types";
 
 const app = new Hono<HonoEnv>();
 
 app.post("/completions", authMiddleware, async (c) => {
-  let body: any;
+  let body: ChatCompletionRequest;
   try {
     body = await c.req.json();
   } catch (error) {
@@ -22,11 +28,13 @@ app.post("/completions", authMiddleware, async (c) => {
   // Calculate tokens for rate limiting
   const messageText =
     body.messages
-      ?.map((msg: any) => {
+      ?.map((msg) => {
         if (typeof msg.content === "string") {
           return msg.content;
         } else if (Array.isArray(msg.content)) {
-          return extractTextFromContent(msg.content);
+          return extractTextFromContent(
+            msg.content as (TextContent | ImageContent)[]
+          );
         }
         return "";
       })
@@ -40,7 +48,7 @@ app.post("/completions", authMiddleware, async (c) => {
   const chatHandler = new ChatHandler(c.env);
   const response = await chatHandler.handleChatCompletionsWithBody(
     body,
-    apiKey,
+    apiKey
   );
 
   // Return the response directly since ChatHandler returns a Response object

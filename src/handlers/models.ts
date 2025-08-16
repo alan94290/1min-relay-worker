@@ -10,16 +10,17 @@ import {
   FUNCTION_CALLING_SUPPORTED_MODELS,
 } from "../constants";
 import { createSuccessResponse } from "../utils";
+import { ModelObject, ModelsResponse } from "../types";
 
 export function handleModelsEndpoint(): Response {
-  const models = ALL_ONE_MIN_AVAILABLE_MODELS.map((model) => ({
+  const models: ModelObject[] = ALL_ONE_MIN_AVAILABLE_MODELS.map((model) => ({
     id: model,
     object: "model",
     created: Math.floor(Date.now() / 1000),
     owned_by: "1min-ai",
-    permission: [],
+    permission: [] as unknown[],
     root: model,
-    parent: null,
+    parent: null as unknown,
     // Add capability flags
     capabilities: {
       vision: VISION_SUPPORTED_MODELS.includes(model),
@@ -29,8 +30,10 @@ export function handleModelsEndpoint(): Response {
     },
   }));
 
-  return createSuccessResponse({
+  const response: ModelsResponse = {
     object: "list",
     data: models,
-  });
+  };
+
+  return createSuccessResponse(response);
 }

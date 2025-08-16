@@ -5,6 +5,10 @@
 // Define available models (synced with utils/constants.py)
 export const ALL_ONE_MIN_AVAILABLE_MODELS = [
   // OpenAI
+  "gpt-5",
+  "gpt-5-mini",
+  "gpt-5-nano",
+  "gpt-5-chat-latest",
   "o1-pro",
   "o1-preview",
   "o1",
@@ -92,10 +96,19 @@ export const ALL_ONE_MIN_AVAILABLE_MODELS = [
 ];
 
 // Define models that support vision inputs (synced with utils/constants.py)
-export const VISION_SUPPORTED_MODELS = ["gpt-4o", "gpt-4o-mini", "gpt-4-turbo"];
+export const VISION_SUPPORTED_MODELS = [
+  "gpt-5",
+  "gpt-5-mini",
+  "gpt-5-chat-latest",
+  "gpt-4o",
+  "gpt-4o-mini",
+  "gpt-4-turbo"
+];
 
 // Define models that support code interpreter
 export const CODE_INTERPRETER_SUPPORTED_MODELS = [
+  "gpt-5",
+  "gpt-5-chat-latest",
   "gpt-4o",
   "claude-3-5-sonnet-20240620",
   "claude-3-5-haiku-20241022",
@@ -107,6 +120,10 @@ export const CODE_INTERPRETER_SUPPORTED_MODELS = [
 
 // Define models that support web search (retrieval)
 export const RETRIEVAL_SUPPORTED_MODELS = [
+  "gpt-5",
+  "gpt-5-mini",
+  "gpt-5-nano",
+  "gpt-5-chat-latest",
   "gemini-1.0-pro",
   "gemini-1.5-pro",
   "gemini-1.5-flash",
