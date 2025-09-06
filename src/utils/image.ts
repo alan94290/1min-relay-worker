@@ -148,13 +148,3 @@ export function extractTextFromContent(
     .map((item) => item.text)
     .join("\n");
 }
-
-/**
- * Checks if model supports vision inputs
- * @param model - Model name
- * @returns boolean - True if model supports vision
- */
-export function isVisionSupportedModel(model: string): boolean {
-  const visionSupportedModels = ["gpt-4o", "gpt-4o-mini", "gpt-4-turbo"];
-  return visionSupportedModels.includes(model);
-}

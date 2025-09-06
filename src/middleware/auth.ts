@@ -9,6 +9,11 @@ export const authMiddleware = createMiddleware<HonoEnv>(async (c, next) => {
     throw new AuthenticationError("API key is required");
   }
 
+  // Validate against AUTH_TOKEN if configured
+  if (c.env.AUTH_TOKEN && apiKey !== c.env.AUTH_TOKEN) {
+    throw new AuthenticationError("Invalid API key");
+  }
+
   c.set("apiKey", apiKey);
   await next();
 });

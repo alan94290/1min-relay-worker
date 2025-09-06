@@ -15,8 +15,8 @@ import {
 import {
   processImageUrl,
   uploadImageToAsset,
-  isVisionSupportedModel,
 } from "../utils/image";
+import { supportsVision } from "../utils/model-capabilities";
 import { WebSearchConfig } from "../utils/model-parser";
 
 // Helper function to extract text content from message content (string or array)
@@ -225,7 +225,7 @@ export class OneMinApiService {
           hasImageRequests = true;
 
           // Check if model supports vision inputs
-          if (!isVisionSupportedModel(model)) {
+          if (!supportsVision(model)) {
             throw new Error(`Model '${model}' does not support image inputs`);
           }
 
@@ -315,7 +315,7 @@ export class OneMinApiService {
           hasImageRequests = true;
 
           // Check if model supports vision inputs
-          if (!isVisionSupportedModel(model)) {
+          if (!supportsVision(model)) {
             throw new Error(`Model '${model}' does not support image inputs`);
           }
 

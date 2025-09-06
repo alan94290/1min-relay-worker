@@ -19,7 +19,7 @@ A TypeScript implementation of the 1min.ai API relay service, designed to run on
 
 ### Text Generation Models
 
-- **OpenAI**: gpt-5, gpt-5-mini, gpt-5-nano, gpt-5-chat-latest, o1-pro, o1, o1-mini, o3-mini, o4-mini, gpt-4.5-preview, gpt-4.1, gpt-4.1-nano, gpt-4.1-mini, gpt-4o, gpt-4-turbo, gpt-3.5-turbo, and more
+- **OpenAI**: gpt-5, gpt-5-mini, gpt-5-nano, gpt-5-chat-latest, o1, o1-mini, o3-mini, o4-mini, gpt-4.5-preview, gpt-4.1, gpt-4.1-nano, gpt-4.1-mini, gpt-4o, gpt-4-turbo, gpt-3.5-turbo, and more
 - **Claude**: claude-3-5-sonnet, claude-3-5-haiku, claude-3-7-sonnet, claude-sonnet-4, claude-opus-4, claude-3-opus, claude-3-haiku
 - **MistralAI**: mistral-large-latest, mistral-small-latest, pixtral-12b
 - **GoogleAI**: gemini-1.5-pro, gemini-1.5-flash, gemini-2.0-flash, gemini-2.0-flash-lite, gemini-2.5-flash, gemini-2.5-pro, gemini-2.5-flash-preview-05-20, gemini-2.5-flash-preview-04-17, gemini-2.5-pro-preview-05-06
@@ -326,8 +326,12 @@ If you encounter issues during deployment:
 
 ### Environment Variables
 
-- `ONEMIN_CHAT_API_URL`: 1min.ai chat completions API endpoint
-- `ONEMIN_IMAGE_API_URL`: 1min.ai image generation API endpoint
+The following environment variables are configured in `wrangler.jsonc`:
+
+- `ONE_MIN_API_URL`: 1min.ai API endpoint for features
+- `ONE_MIN_CONVERSATION_API_URL`: 1min.ai conversation API endpoint
+- `ONE_MIN_CONVERSATION_API_STREAMING_URL`: 1min.ai streaming API endpoint
+- `ONE_MIN_ASSET_URL`: 1min.ai asset API endpoint
 
 ### KV Namespace
 
@@ -340,7 +344,7 @@ If you encounter issues during deployment:
 ```bash
 curl -X POST https://your-worker.your-subdomain.workers.dev/v1/chat/completions \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer your-api-key" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
   -d '{
     "model": "gpt-4o",
     "messages": [{"role": "user", "content": "Hello!"}],
@@ -353,7 +357,7 @@ curl -X POST https://your-worker.your-subdomain.workers.dev/v1/chat/completions 
 ```bash
 curl -X POST https://your-worker.your-subdomain.workers.dev/v1/responses \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer your-api-key" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
   -d '{
     "model": "gpt-4.1",
     "input": "Analyze the benefits of renewable energy",
@@ -369,7 +373,7 @@ curl -X POST https://your-worker.your-subdomain.workers.dev/v1/responses \
 ```bash
 curl -X POST https://your-worker.your-subdomain.workers.dev/v1/images/generations \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer your-api-key" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
   -d '{
     "model": "dall-e-3",
     "prompt": "A beautiful sunset over mountains",
@@ -383,7 +387,7 @@ curl -X POST https://your-worker.your-subdomain.workers.dev/v1/images/generation
 ```bash
 curl -X POST https://your-worker.your-subdomain.workers.dev/v1/chat/completions \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer your-api-key" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
   -d '{
     "model": "gpt-4o",
     "messages": [{"role": "user", "content": "Tell me a story"}],

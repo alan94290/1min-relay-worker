@@ -2,6 +2,8 @@
  * API response types for OpenAI-compatible responses
  */
 
+import { ToolCall, FunctionCall } from "./function-calling";
+
 export interface ChatCompletionResponse {
   id: string;
   object: "chat.completion";
@@ -11,7 +13,9 @@ export interface ChatCompletionResponse {
     index: number;
     message: {
       role: string;
-      content: string;
+      content: string | null;
+      tool_calls?: ToolCall[];
+      function_call?: FunctionCall;
     };
     finish_reason: string | null;
   }>;
@@ -32,6 +36,8 @@ export interface ChatCompletionStreamChunk {
     delta: {
       role?: string;
       content?: string;
+      tool_calls?: ToolCall[];
+      function_call?: FunctionCall;
     };
     finish_reason: string | null;
   }>;

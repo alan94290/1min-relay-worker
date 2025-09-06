@@ -11,10 +11,8 @@ import {
   ModelParser,
   WebSearchConfig,
 } from "../utils";
-import {
-  extractImageFromContent,
-  isVisionSupportedModel,
-} from "../utils/image";
+import { extractImageFromContent } from "../utils/image";
+import { supportsVision } from "../utils/model-capabilities";
 import { ALL_ONE_MIN_AVAILABLE_MODELS, DEFAULT_MODEL } from "../constants";
 
 export class ResponseHandler {
@@ -99,7 +97,7 @@ export class ResponseHandler {
 
       // Check for images and validate vision model support
       const hasImages = this.checkForImages(messages);
-      if (hasImages && !isVisionSupportedModel(cleanModel)) {
+      if (hasImages && !supportsVision(cleanModel)) {
         return createErrorResponse(
           `Model '${cleanModel}' does not support image inputs`,
           400,
