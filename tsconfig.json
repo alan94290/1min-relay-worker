@@ -14,10 +14,11 @@
     "strictNullChecks": true,
     "strict": true,
     "noUncheckedIndexedAccess": true,
-    /* If NOT transpiling with TypeScript: */
+    /* If transpiling with TypeScript: */
     "moduleResolution": "Bundler",
     "module": "es2022",
-    "noEmit": true,
+    "noEmit": false,
+    "outDir": "dist",
     "lib": ["es2022"],
     "types": [
       "@cloudflare/workers-types",

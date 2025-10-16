@@ -22,6 +22,8 @@ export const ALL_ONE_MIN_AVAILABLE_MODELS = [
   "gpt-4-turbo",
   "gpt-4",
   "gpt-3.5-turbo",
+  "openai/gpt-oss-20b",
+  "openai/gpt-oss-120b",
   "whisper-1", // Speech recognition
   "tts-1", // Text-to-speech
   "tts-1-hd", // Text-to-speech HD
@@ -70,6 +72,9 @@ export const ALL_ONE_MIN_AVAILABLE_MODELS = [
   "command",
   // xAI
   "grok-2",
+  "grok-3",
+  "grok-3-mini",
+  "grok-4-0709",
   // Perplexity Sonar
   "sonar-reasoning-pro",
   "sonar-reasoning",
@@ -155,6 +160,9 @@ export const RETRIEVAL_SUPPORTED_MODELS = [
   "meta/meta-llama-3.1-405b-instruct",
   "command",
   "grok-2",
+  "grok-3",
+  "grok-3-mini",
+  "grok-4-0709",
   "deepseek-chat",
   "deepseek-reasoner",
   "sonar-reasoning-pro",

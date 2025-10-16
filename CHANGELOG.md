@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.6.0] - 2025-10-11
+
+### Added
+- **New xAI Grok Models Support**:
+  - `grok-3` - Latest Grok model with enhanced capabilities
+  - `grok-3-mini` - Lightweight Grok model for faster responses
+  - `grok-4-0709` - Advanced Grok model (version 0709)
+  - All new Grok models support web search/retrieval functionality (`:online` suffix)
+- **New OpenAI Models Support**:
+  - `openai/gpt-oss-20b` - OpenAI open source model (20B parameters)
+  - `openai/gpt-oss-120b` - OpenAI open source model (120B parameters)
+
+### Changed
+- **Model Constants**: Updated `ALL_ONE_MIN_AVAILABLE_MODELS` to include new Grok and OpenAI models
+- **Retrieval Support**: Added new Grok models to `RETRIEVAL_SUPPORTED_MODELS` list
+
 ## [3.5.5] - 2025-09-01
 
 ### Fixed
