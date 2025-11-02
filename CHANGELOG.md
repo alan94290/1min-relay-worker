@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.6.2] - 2025-10-12
+
+### Added
+- **Vision Support for Grok 4 Fast Models**:
+  - `grok-4-fast-reasoning` now supports image input (vision capabilities)
+  - `grok-4-fast-non-reasoning` now supports image input (vision capabilities)
+  - Both models can process images alongside text in chat completions
+
+### Changed
+- **Vision Models**: Added Grok 4 fast models to `VISION_SUPPORTED_MODELS` list
+- **Documentation**: Updated README to reflect new vision-capable models
+
+## [3.6.1] - 2025-10-12
+
+### Added
+- **New xAI Grok 4 Fast Models Support**:
+  - `grok-4-fast-reasoning` - Fast Grok 4 model with reasoning capabilities
+  - `grok-4-fast-non-reasoning` - Fast Grok 4 model optimized for speed
+  - Both models support web search/retrieval functionality (`:online` suffix)
+
+### Changed
+- **Model Constants**: Updated `ALL_ONE_MIN_AVAILABLE_MODELS` to include new Grok 4 fast models
+- **Retrieval Support**: Added new Grok 4 fast models to `RETRIEVAL_SUPPORTED_MODELS` list
+
 ## [3.6.0] - 2025-10-11
 
 ### Added

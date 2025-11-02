@@ -75,6 +75,8 @@ export const ALL_ONE_MIN_AVAILABLE_MODELS = [
   "grok-3",
   "grok-3-mini",
   "grok-4-0709",
+  "grok-4-fast-reasoning",
+  "grok-4-fast-non-reasoning",
   // Perplexity Sonar
   "sonar-reasoning-pro",
   "sonar-reasoning",
@@ -105,7 +107,9 @@ export const VISION_SUPPORTED_MODELS = [
   "gpt-5-chat-latest",
   "gpt-4o",
   "gpt-4o-mini",
-  "gpt-4-turbo"
+  "gpt-4-turbo",
+  "grok-4-fast-reasoning",
+  "grok-4-fast-non-reasoning"
 ];
 
 // Define models that support code interpreter
@@ -163,6 +167,8 @@ export const RETRIEVAL_SUPPORTED_MODELS = [
   "grok-3",
   "grok-3-mini",
   "grok-4-0709",
+  "grok-4-fast-reasoning",
+  "grok-4-fast-non-reasoning",
   "deepseek-chat",
   "deepseek-reasoner",
   "sonar-reasoning-pro",

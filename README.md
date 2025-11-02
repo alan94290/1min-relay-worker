@@ -25,12 +25,13 @@ A TypeScript implementation of the 1min.ai API relay service, designed to run on
 - **GoogleAI**: gemini-1.5-pro, gemini-1.5-flash, gemini-2.0-flash, gemini-2.0-flash-lite, gemini-2.5-flash, gemini-2.5-pro, gemini-2.5-flash-preview-05-20, gemini-2.5-flash-preview-04-17, gemini-2.5-pro-preview-05-06
 - **DeepSeek**: deepseek-chat, deepseek-reasoner
 - **Meta**: llama-2-70b-chat, meta-llama-3.1-405b-instruct, llama-4-maverick-instruct, llama-4-scout-instruct
-- **xAI**: grok-2, grok-3, grok-3-mini, grok-4-0709
+- **xAI**: grok-2, grok-3, grok-3-mini, grok-4-0709, grok-4-fast-reasoning, grok-4-fast-non-reasoning
 - **Perplexity Sonar**: sonar-reasoning-pro, sonar-reasoning, sonar-pro, sonar
 
 ### Vision Models (Image Input Support)
 
 - **OpenAI**: gpt-5, gpt-5-mini, gpt-5-chat-latest, gpt-4o, gpt-4o-mini, gpt-4-turbo
+- **xAI**: grok-4-fast-reasoning, grok-4-fast-non-reasoning
 
 ### Image Generation Models
 
