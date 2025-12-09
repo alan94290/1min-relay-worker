@@ -49,17 +49,9 @@ export class ImageHandler {
       );
 
       try {
-        console.log(
-          "Sending image request with body:",
-          JSON.stringify(requestBodyForAPI, null, 2)
-        );
         const data = await this.apiService.sendImageRequest(
           requestBodyForAPI,
           apiKey
-        );
-        console.log(
-          "Received image API response:",
-          JSON.stringify(data, null, 2)
         );
 
         // Transform response to OpenAI format

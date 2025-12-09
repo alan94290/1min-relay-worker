@@ -7,7 +7,78 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [3.6.2] - 2025-10-12
+## [3.6.7] - 2025-11-23
+
+### Changed
+- **Model List Organization**: Sorted all model lists alphabetically within each provider category
+  - `ALL_ONE_MIN_AVAILABLE_MODELS` - All models sorted alphabetically per provider
+  - `VISION_SUPPORTED_MODELS` - Vision models sorted alphabetically
+  - `CODE_INTERPRETER_SUPPORTED_MODELS` - Code interpreter models sorted alphabetically
+  - `RETRIEVAL_SUPPORTED_MODELS` - Web search models sorted alphabetically
+  - `FUNCTION_CALLING_SUPPORTED_MODELS` - Function calling models sorted alphabetically
+  - `IMAGE_GENERATION_MODELS` - Image generation models sorted alphabetically
+  - `VARIATION_SUPPORTED_MODELS` - Image variation models sorted alphabetically
+  - Improved code readability and maintainability
+
+## [3.6.6] - 2025-11-23
+
+### Added
+- **New Claude Model Support**:
+  - `claude-opus-4-5-20251101` - Latest Claude Opus 4.5 model
+  - Supports web search/retrieval functionality (`:online` suffix)
+
+### Changed
+- **Model Constants**: Updated `ALL_ONE_MIN_AVAILABLE_MODELS` to include new Claude model
+- **Retrieval Support**: Added new Claude model to `RETRIEVAL_SUPPORTED_MODELS` list
+
+## [3.6.5] - 2025-11-23
+
+### Added
+- **New OpenAI GPT-5.1 Models Support**:
+  - `gpt-5.1` - Latest GPT-5.1 model
+  - `gpt-5.1-codex` - GPT-5.1 model specialized for coding
+  - `gpt-5.1-codex-mini` - Lightweight GPT-5.1 coding model
+  - All models support web search/retrieval functionality (`:online` suffix)
+- **New Google Gemini Model Support**:
+  - `gemini-3-pro-preview` - Preview version of Gemini 3 Pro model
+  - Supports web search/retrieval functionality (`:online` suffix)
+
+### Changed
+- **Model Constants**: Updated `ALL_ONE_MIN_AVAILABLE_MODELS` to include new OpenAI and Google models
+- **Retrieval Support**: Added new models to `RETRIEVAL_SUPPORTED_MODELS` list
+
+## [3.6.4] - 2025-11-23
+
+### Changed
+- **Code Refactoring**: Extracted shared message processing methods to common utility
+  - Created `src/utils/message-processing.ts` with reusable functions
+  - `checkForImages()` - Check if messages contain images
+  - `processMessages()` - Process and convert image format for API
+  - `parseAndValidateModel()` - Parse and validate model names
+  - Reduced code duplication between `chat.ts` and `responses.ts`
+
+### Removed
+- **Unused Variables**: Removed unused `chunkCount` and `totalChars` variables in streaming handler
+- **Debug Logs**: Removed unnecessary production logging in chat and image handlers
+  - Removed streaming response start logs
+  - Removed image request/response debug logs
+
+### Fixed
+- **Code Quality**: Improved maintainability by centralizing shared logic
+
+## [3.6.3] - 2025-11-23
+
+### Added
+- **New Claude Models Support**:
+  - `claude-haiku-4-5-20251001` - Latest Claude Haiku 4.5 model
+  - `claude-sonnet-4-5-20250929` - Latest Claude Sonnet 4.5 model
+  - Both models support web search/retrieval functionality (`:online` suffix)
+
+### Changed
+- **Model Constants**: Updated `ALL_ONE_MIN_AVAILABLE_MODELS` to include new Claude models
+- **Retrieval Support**: Added new Claude models to `RETRIEVAL_SUPPORTED_MODELS` list
+
+## [3.6.2] - 2025-11-23
 
 ### Added
 - **Vision Support for Grok 4 Fast Models**:
@@ -19,7 +90,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Vision Models**: Added Grok 4 fast models to `VISION_SUPPORTED_MODELS` list
 - **Documentation**: Updated README to reflect new vision-capable models
 
-## [3.6.1] - 2025-10-12
+## [3.6.1] - 2025-11-23
 
 ### Added
 - **New xAI Grok 4 Fast Models Support**:

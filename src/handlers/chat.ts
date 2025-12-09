@@ -5,8 +5,6 @@
 import {
   Env,
   Message,
-  TextContent,
-  ImageContent,
   ChatCompletionResponse,
   ChatCompletionStreamChunk,
   OneMinResponse,
@@ -18,7 +16,6 @@ import {
   createErrorResponse,
   createSuccessResponse,
   createErrorResponseFromError,
-  ModelParser,
   WebSearchConfig,
   ModelNotFoundError,
   convertToolsToSystemPrompt,
@@ -26,8 +23,10 @@ import {
   parseFunctionCallsFromResponse,
   hasFunctionCallingParams,
   transformResponseWithFunctionCalls,
+  checkForImages,
+  processMessages,
+  parseAndValidateModel,
 } from "../utils";
-import { extractImageFromContent } from "../utils/image";
 import { supportsVision } from "../utils/model-capabilities";
 import { SimpleUTF8Decoder } from "../utils/utf8-decoder";
 import { ALL_ONE_MIN_AVAILABLE_MODELS, DEFAULT_MODEL } from "../constants";
@@ -67,7 +66,7 @@ export class ChatHandler {
       const rawModel = requestBody.model || DEFAULT_MODEL;
 
       // Parse model name and get web search configuration
-      const parseResult = this.parseAndValidateModel(rawModel);
+      const parseResult = parseAndValidateModel(rawModel, this.env);
       if (parseResult.error) {
         return createErrorResponse(
           parseResult.error,
@@ -85,7 +84,7 @@ export class ChatHandler {
       }
 
       // Check for images and validate vision model support
-      const hasImages = this.checkForImages(requestBody.messages as Message[]);
+      const hasImages = checkForImages(requestBody.messages as Message[]);
       if (hasImages && !supportsVision(cleanModel)) {
         return createErrorResponse(
           `Model '${cleanModel}' does not support image inputs`,
@@ -96,7 +95,7 @@ export class ChatHandler {
       }
 
       // Process messages and extract images if any
-      let processedMessages = this.processMessages(
+      let processedMessages = processMessages(
         requestBody.messages as Message[]
       );
 
@@ -140,54 +139,6 @@ export class ChatHandler {
       console.error("Chat completion error:", error);
       return createErrorResponseFromError(error);
     }
-  }
-
-  private parseAndValidateModel(modelName: string): {
-    cleanModel: string;
-    webSearchConfig?: WebSearchConfig;
-    error?: string;
-  } {
-    return ModelParser.parseAndGetConfig(modelName, this.env);
-  }
-
-  private checkForImages(messages: Message[]): boolean {
-    for (const message of messages) {
-      if (Array.isArray(message.content)) {
-        for (const item of message.content) {
-          if (item.type === "image_url" && item.image_url?.url) {
-            return true;
-          }
-        }
-      }
-    }
-    return false;
-  }
-
-  private processMessages(messages: Message[]): Message[] {
-    return messages.map((message) => {
-      // Handle vision inputs
-      if (Array.isArray(message.content)) {
-        const imageUrl = extractImageFromContent(message.content);
-        if (imageUrl) {
-          // Convert to format expected by 1min.ai API
-          return {
-            ...message,
-            content: (message.content as (TextContent | ImageContent)[]).map(
-              (item) => {
-                if (item.type === "image_url") {
-                  return {
-                    type: "image_url",
-                    image_url: { url: item.image_url.url },
-                  };
-                }
-                return item;
-              }
-            ),
-          };
-        }
-      }
-      return message;
-    });
   }
 
   private async handleNonStreamingChat(
@@ -295,12 +246,6 @@ export class ChatHandler {
           const encoder = new TextEncoder();
           let accumulatedContent = "";
           let functionCallsSent = false;
-          let chunkCount = 0;
-          let totalChars = 0;
-
-          console.log("=== 1MIN.AI STREAMING RESPONSE START ====");
-          console.log("Model:", model);
-          console.log("Using UTF-8 safe decoder");
 
           while (true) {
             const { done, value } = await reader.read();

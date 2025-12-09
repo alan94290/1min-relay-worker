@@ -3,15 +3,16 @@
  * Handles structured outputs and reasoning requests
  */
 
-import { Env, ResponseRequest } from "../types";
+import { Env, ResponseRequest, Message } from "../types";
 import { OneMinApiService } from "../services";
 import {
   createErrorResponse,
   createSuccessResponse,
-  ModelParser,
   WebSearchConfig,
+  checkForImages,
+  processMessages,
+  parseAndValidateModel,
 } from "../utils";
-import { extractImageFromContent } from "../utils/image";
 import { supportsVision } from "../utils/model-capabilities";
 import { ALL_ONE_MIN_AVAILABLE_MODELS, DEFAULT_MODEL } from "../constants";
 
@@ -73,7 +74,7 @@ export class ResponseHandler {
       const rawModel = requestBody.model || DEFAULT_MODEL;
 
       // Parse model name and get web search configuration
-      const parseResult = this.parseAndValidateModel(rawModel);
+      const parseResult = parseAndValidateModel(rawModel, this.env);
       if (parseResult.error) {
         return createErrorResponse(
           parseResult.error,
@@ -96,7 +97,7 @@ export class ResponseHandler {
       }
 
       // Check for images and validate vision model support
-      const hasImages = this.checkForImages(messages);
+      const hasImages = checkForImages(messages as Message[]);
       if (hasImages && !supportsVision(cleanModel)) {
         return createErrorResponse(
           `Model '${cleanModel}' does not support image inputs`,
@@ -107,7 +108,7 @@ export class ResponseHandler {
       }
 
       // Process messages and extract images if any
-      const processedMessages = this.processMessages(messages);
+      const processedMessages = processMessages(messages as Message[]);
 
       // Handle the response request (responses API doesn't support streaming)
       return this.handleNonStreamingResponse(
@@ -124,52 +125,6 @@ export class ResponseHandler {
       console.error("Response error:", error);
       return createErrorResponse("Internal server error", 500);
     }
-  }
-
-  private parseAndValidateModel(modelName: string): {
-    cleanModel: string;
-    webSearchConfig?: WebSearchConfig;
-    error?: string;
-  } {
-    return ModelParser.parseAndGetConfig(modelName, this.env);
-  }
-
-  private checkForImages(messages: any[]): boolean {
-    for (const message of messages) {
-      if (Array.isArray(message.content)) {
-        for (const item of message.content) {
-          if (item.type === "image_url" && item.image_url?.url) {
-            return true;
-          }
-        }
-      }
-    }
-    return false;
-  }
-
-  private processMessages(messages: any[]): any[] {
-    return messages.map((message) => {
-      // Handle vision inputs
-      if (Array.isArray(message.content)) {
-        const imageUrl = extractImageFromContent(message.content);
-        if (imageUrl) {
-          // Convert to format expected by 1min.ai API
-          return {
-            ...message,
-            content: message.content.map((item: any) => {
-              if (item.type === "image_url") {
-                return {
-                  type: "image_url",
-                  image_url: { url: item.image_url.url },
-                };
-              }
-              return item;
-            }),
-          };
-        }
-      }
-      return message;
-    });
   }
 
   private async handleNonStreamingResponse(
