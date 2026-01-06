@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.6.8] - 2025-11-23
+
+### Added
+- **New OpenAI GPT-5.2 Models Support**:
+  - `gpt-5.2` - Latest GPT-5.2 model
+  - `gpt-5.2-pro` - GPT-5.2 Pro model with enhanced capabilities
+  - Both models support web search/retrieval functionality (`:online` suffix)
+
+### Changed
+- **Model Constants**: Updated `ALL_ONE_MIN_AVAILABLE_MODELS` to include new GPT-5.2 models
+- **Retrieval Support**: Added new GPT-5.2 models to `RETRIEVAL_SUPPORTED_MODELS` list
+
 ## [3.6.7] - 2025-11-23
 
 ### Changed

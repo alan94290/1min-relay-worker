@@ -19,7 +19,7 @@ A TypeScript implementation of the 1min.ai API relay service, designed to run on
 
 ### Text Generation Models
 
-- **OpenAI**: gpt-5, gpt-5-mini, gpt-5-nano, gpt-5-chat-latest, gpt-5.1, gpt-5.1-codex, gpt-5.1-codex-mini, o1, o1-mini, o3-mini, o4-mini, gpt-4.5-preview, gpt-4.1, gpt-4.1-nano, gpt-4.1-mini, gpt-4o, gpt-4-turbo, gpt-3.5-turbo, openai/gpt-oss-20b, openai/gpt-oss-120b, and more
+- **OpenAI**: gpt-5, gpt-5-mini, gpt-5-nano, gpt-5-chat-latest, gpt-5.1, gpt-5.1-codex, gpt-5.1-codex-mini, gpt-5.2, gpt-5.2-pro, o1, o1-mini, o3-mini, o4-mini, gpt-4.5-preview, gpt-4.1, gpt-4.1-nano, gpt-4.1-mini, gpt-4o, gpt-4-turbo, gpt-3.5-turbo, openai/gpt-oss-20b, openai/gpt-oss-120b, and more
 - **Claude**: claude-3-5-sonnet, claude-3-5-haiku, claude-3-7-sonnet, claude-sonnet-4, claude-opus-4, claude-haiku-4-5, claude-sonnet-4-5, claude-opus-4-5, claude-3-opus, claude-3-haiku
 - **MistralAI**: mistral-large-latest, mistral-small-latest, pixtral-12b
 - **GoogleAI**: gemini-1.5-pro, gemini-1.5-flash, gemini-2.0-flash, gemini-2.0-flash-lite, gemini-2.5-flash, gemini-2.5-pro, gemini-2.5-flash-preview-05-20, gemini-2.5-flash-preview-04-17, gemini-2.5-pro-preview-05-06, gemini-3-pro-preview
