@@ -10,7 +10,7 @@ A TypeScript implementation of the 1min.ai API relay service, designed to run on
 - **OpenAI Responses API**: Structured outputs with JSON objects, JSON schema, and reasoning effort control
 - **Distributed Rate Limiting**: Uses Cloudflare KV for consistent rate limiting across multiple worker instances
 - **Accurate Token Counting**: Integrated with `gpt-tokenizer` for precise token calculation across all models
-- **60+ AI Models**: Supports all latest models including GPT-4o, Claude 3.5, Mistral, Flux, Leonardo.ai, and more
+- **65+ AI Models**: Supports all latest models including GPT-4o, Claude 3.5, Mistral, Flux, Leonardo.ai, Qwen, and more
 - **Streaming Support**: Real-time streaming responses for chat completions
 - **TypeScript**: Full type safety and modern development experience
 - **Vision Support**: Supports image input for vision models
@@ -39,12 +39,14 @@ A TypeScript implementation of the 1min.ai API relay service, designed to run on
 - **Midjourney**: midjourney, midjourney_6_1
 - **Leonardo.ai**: phoenix, lightning-xl, anime-xl, diffusion-xl, kino-xl, vision-xl, albedo-base-xl
 - **Flux**: flux-schnell, flux-dev, flux-pro, flux-1.1-pro
+- **Qwen**: qwen-image-plus, qwen-image-max, qwen-image-edit-plus
 - **Stable Diffusion**: stable-diffusion-xl-1024-v1-0, stable-diffusion-v1-6
 
 ### Speech Models
 
-- **Speech-to-Text**: whisper-1
-- **Text-to-Speech**: tts-1, tts-1-hd
+- **Speech-to-Text**: whisper-1, qwen3-asr-flash
+- **Text-to-Speech**: tts-1, tts-1-hd, qwen3-tts-flash
+- **Translation**: qwen3-livetranslate-flash
 
 ## API Endpoints
 
