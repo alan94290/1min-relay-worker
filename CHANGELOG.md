@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.6.9] - 2025-02-05
+
+### Added
+- **New Qwen Models Support**:
+  - `qwen-image-plus` - Qwen image generation plus model
+  - `qwen-image-max` - Qwen image generation max model
+  - `qwen-image-edit-plus` - Qwen image editing plus model
+  - `qwen3-tts-flash` - Qwen text-to-speech flash model
+  - `qwen3-asr-flash` - Qwen speech recognition flash model
+  - `qwen3-livetranslate-flash` - Qwen live translation flash model
+
+### Changed
+- **Model Constants**: Updated `ALL_ONE_MIN_AVAILABLE_MODELS` to include new Qwen models
+- **Image Generation Models**: Added `qwen-image-plus`, `qwen-image-max`, `qwen-image-edit-plus` to `IMAGE_GENERATION_MODELS`
+- **Image Variation Models**: Added `qwen-image-edit-plus` to `VARIATION_SUPPORTED_MODELS`
+- **Text-to-Speech Models**: Added `qwen3-tts-flash` to `TEXT_TO_SPEECH_MODELS`
+- **Speech-to-Text Models**: Added `qwen3-asr-flash` to `SPEECH_TO_TEXT_MODELS`
+
 ## [3.6.8] - 2025-11-23
 
 ### Added

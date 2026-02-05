@@ -107,6 +107,13 @@ export const ALL_ONE_MIN_AVAILABLE_MODELS = [
   "flux-dev", // Flux development model
   "flux-pro", // Flux professional model
   "flux-schnell", // Flux fast generation
+  // Qwen models
+  "qwen-image-plus", // Qwen image generation plus
+  "qwen-image-max", // Qwen image generation max
+  "qwen-image-edit-plus", // Qwen image editing plus
+  "qwen3-tts-flash", // Qwen text-to-speech flash
+  "qwen3-asr-flash", // Qwen speech recognition flash
+  "qwen3-livetranslate-flash", // Qwen live translation flash
 ];
 
 // Define models that support vision inputs (synced with utils/constants.py)
@@ -214,6 +221,9 @@ export const IMAGE_GENERATION_MODELS = [
   "midjourney",
   "midjourney_6_1",
   "phoenix",
+  "qwen-image-plus",
+  "qwen-image-max",
+  "qwen-image-edit-plus",
   "stable-diffusion-v1-6",
   "stable-diffusion-xl-1024-v1-0",
   "vision-xl",
@@ -226,10 +236,11 @@ export const VARIATION_SUPPORTED_MODELS = [
   "dall-e-3",
   "midjourney",
   "midjourney_6_1",
+  "qwen-image-edit-plus",
 ];
 
 // Text-to-speech models
-export const TEXT_TO_SPEECH_MODELS = ["tts-1", "tts-1-hd"];
+export const TEXT_TO_SPEECH_MODELS = ["tts-1", "tts-1-hd", "qwen3-tts-flash"];
 
 // Speech-to-text models
-export const SPEECH_TO_TEXT_MODELS = ["whisper-1"];
+export const SPEECH_TO_TEXT_MODELS = ["whisper-1", "qwen3-asr-flash"];
