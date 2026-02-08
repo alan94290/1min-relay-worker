@@ -8,6 +8,6 @@ export * from "./response";
 export * from "./model-parser";
 export * from "./model-capabilities";
 export * from "./errors";
-export * from "./function-calling";
 export * from "./utf8-decoder";
 export * from "./message-processing";
+export * from "./sse";

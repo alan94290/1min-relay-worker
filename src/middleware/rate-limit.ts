@@ -17,7 +17,7 @@ export class RateLimiter {
 
   async checkRateLimit(
     clientId: string,
-    tokenCount: number = 0
+    tokenCount: number = 0,
   ): Promise<{ allowed: boolean; response?: Response }> {
     if (!this.env.RATE_LIMIT_STORE) {
       // If no KV store is configured, allow all requests
@@ -48,20 +48,20 @@ export class RateLimiter {
       } else {
         // Clean up old timestamps (only keep current window)
         record.timestamps = record.timestamps.filter(
-          (timestamp) => timestamp > windowStart
+          (timestamp) => timestamp > windowStart,
         );
       }
 
       // Check request count limit
       if (record.timestamps.length >= this.config.maxRequests) {
         const retryAfter = Math.ceil(
-          ((record.windowStart ?? now) + this.config.windowMs - now) / 1000
+          ((record.windowStart ?? now) + this.config.windowMs - now) / 1000,
         );
         return {
           allowed: false,
           response: this.createRateLimitResponse(
             `Rate limit exceeded. Maximum ${this.config.maxRequests} requests per minute allowed.`,
-            retryAfter
+            retryAfter,
           ),
         };
       }
@@ -72,13 +72,13 @@ export class RateLimiter {
         record.tokenCount + tokenCount > this.config.maxTokens
       ) {
         const retryAfter = Math.ceil(
-          ((record.windowStart ?? now) + this.config.windowMs - now) / 1000
+          ((record.windowStart ?? now) + this.config.windowMs - now) / 1000,
         );
         return {
           allowed: false,
           response: this.createRateLimitResponse(
             `Token rate limit exceeded. Maximum ${this.config.maxTokens} tokens per minute allowed.`,
-            retryAfter
+            retryAfter,
           ),
         };
       }
@@ -102,7 +102,7 @@ export class RateLimiter {
 
   private createRateLimitResponse(
     message: string,
-    retryAfter: number
+    retryAfter: number,
   ): Response {
     return new Response(
       JSON.stringify({
@@ -120,7 +120,7 @@ export class RateLimiter {
           "Retry-After": retryAfter.toString(),
           "X-RateLimit-Remaining": "0",
         },
-      }
+      },
     );
   }
 
@@ -147,7 +147,7 @@ export class RateLimiter {
 
   async middleware(
     request: Request,
-    tokenCount: number = 0
+    tokenCount: number = 0,
   ): Promise<{ allowed: boolean; response?: Response }> {
     const clientId = this.getClientId(request);
     return this.checkRateLimit(clientId, tokenCount);

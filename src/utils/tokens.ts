@@ -10,7 +10,7 @@ const MAX_CACHE_SIZE = 1000;
 
 export function calculateTokens(
   text: string,
-  model: string = "DEFAULT"
+  model: string = "DEFAULT",
 ): number {
   // Check cache first for performance
   const cacheKey = `${model}:${text.length}:${text.slice(0, 50)}`;

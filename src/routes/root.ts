@@ -12,7 +12,7 @@ app.get("/", (c) => {
       `- Chat Completions: ${origin}/v1/chat/completions\n` +
       `- Responses: ${origin}/v1/responses\n` +
       `- Image Generation: ${origin}/v1/images/generations\n` +
-      `- Models: ${origin}/v1/models`
+      `- Models: ${origin}/v1/models`,
   );
 });
 

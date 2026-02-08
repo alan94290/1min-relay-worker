@@ -1,13 +1,7 @@
 import { createMiddleware } from "hono/factory";
 import { HonoEnv } from "../types/hono";
-import {
-  ValidationError,
-  AuthenticationError,
-  RateLimitError,
-  ModelNotFoundError,
-  ApiError,
-  toOpenAIError,
-} from "../utils/errors";
+import { toOpenAIError, toAnthropicError } from "../utils/errors";
+import { ContentfulStatusCode } from "hono/utils/http-status";
 
 export const errorHandler = createMiddleware<HonoEnv>(async (c, next) => {
   try {
@@ -22,17 +16,24 @@ export const errorHandler = createMiddleware<HonoEnv>(async (c, next) => {
       method: c.req.method,
     });
 
+    // Return Anthropic format for /v1/messages paths
+    const path = new URL(c.req.url).pathname;
+    if (path.startsWith("/v1/messages")) {
+      const errorData = toAnthropicError(error);
+      return c.json(
+        {
+          type: "error",
+          error: {
+            type: errorData.type,
+            message: errorData.message,
+          },
+        },
+        errorData.status as ContentfulStatusCode,
+      );
+    }
+
     // Use the unified error handler for consistent OpenAI API format
     const errorData = toOpenAIError(error);
-
-    const headers: Record<string, string> = {
-      "Content-Type": "application/json",
-    };
-
-    // Add retry-after header for rate limit errors
-    if (error instanceof RateLimitError && (error as any).retryAfter) {
-      headers["Retry-After"] = (error as any).retryAfter.toString();
-    }
 
     return c.json(
       {
@@ -43,8 +44,7 @@ export const errorHandler = createMiddleware<HonoEnv>(async (c, next) => {
           code: errorData.code,
         },
       },
-      errorData.status as any,
-      headers
+      errorData.status as ContentfulStatusCode,
     );
   }
 });

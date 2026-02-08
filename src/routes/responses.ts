@@ -1,29 +1,35 @@
 import { Hono } from "hono";
 import { HonoEnv } from "../types/hono";
+import { ResponseRequest } from "../types";
 import { ResponseHandler } from "../handlers";
 import { authMiddleware } from "../middleware/auth";
 import { createRateLimitMiddleware } from "../middleware/rate-limit-hono";
-import { calculateTokens } from "../utils";
-import { extractTextFromContent } from "../utils/image";
+import {
+  calculateTokens,
+  extractAllMessageText,
+  extractTextFromMessageContent,
+} from "../utils";
+import { ValidationError } from "../utils/errors";
 
 const app = new Hono<HonoEnv>();
 
 app.post("/", authMiddleware, async (c) => {
-  const body = await c.req.json();
+  let body: ResponseRequest;
+  try {
+    body = await c.req.json();
+  } catch {
+    throw new ValidationError("Invalid JSON in request body");
+  }
+
   const apiKey = c.get("apiKey");
 
   // Calculate tokens for rate limiting
-  const messageText =
-    body.messages
-      ?.map((msg: any) => {
-        if (typeof msg.content === "string") {
-          return msg.content;
-        } else if (Array.isArray(msg.content)) {
-          return extractTextFromContent(msg.content);
-        }
-        return "";
-      })
-      .join(" ") || "";
+  let messageText = "";
+  if (typeof body.input === "string") {
+    messageText = body.input;
+  } else if (body.messages) {
+    messageText = extractAllMessageText(body.messages);
+  }
   const tokenCount = calculateTokens(messageText, body.model);
 
   // Apply rate limiting with token count
@@ -33,7 +39,6 @@ app.post("/", authMiddleware, async (c) => {
   const responseHandler = new ResponseHandler(c.env);
   const response = await responseHandler.handleResponsesWithBody(body, apiKey);
 
-  // Return the response directly since ResponseHandler returns a Response object
   return new Response(response.body, {
     status: response.status,
     statusText: response.statusText,

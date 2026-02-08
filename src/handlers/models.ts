@@ -7,7 +7,6 @@ import {
   VISION_SUPPORTED_MODELS,
   CODE_INTERPRETER_SUPPORTED_MODELS,
   RETRIEVAL_SUPPORTED_MODELS,
-  FUNCTION_CALLING_SUPPORTED_MODELS,
 } from "../constants";
 import { createSuccessResponse } from "../utils";
 import { ModelObject, ModelsResponse } from "../types";
@@ -26,7 +25,6 @@ export function handleModelsEndpoint(): Response {
       vision: VISION_SUPPORTED_MODELS.includes(model),
       code_interpreter: CODE_INTERPRETER_SUPPORTED_MODELS.includes(model),
       retrieval: RETRIEVAL_SUPPORTED_MODELS.includes(model),
-      function_calling: FUNCTION_CALLING_SUPPORTED_MODELS.includes(model),
     },
   }));
 

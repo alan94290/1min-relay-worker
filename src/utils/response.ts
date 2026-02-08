@@ -10,7 +10,7 @@ export function createErrorResponse(
   status: number = 400,
   errorType: string = "invalid_request_error",
   errorCode: string | null = null,
-  param: string | null = null
+  param: string | null = null,
 ): Response {
   return new Response(
     JSON.stringify({
@@ -27,13 +27,13 @@ export function createErrorResponse(
         "Content-Type": "application/json",
         ...CORS_HEADERS,
       },
-    }
+    },
   );
 }
 
 export function createSuccessResponse<T = unknown>(
   data: T,
-  status: number = 200
+  status: number = 200,
 ): Response {
   return new Response(JSON.stringify(data), {
     status,
@@ -58,6 +58,6 @@ export function createErrorResponseFromError(error: unknown): Response {
     errorData.status,
     errorData.type,
     errorData.code,
-    errorData.param
+    errorData.param,
   );
 }
