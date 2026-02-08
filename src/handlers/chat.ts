@@ -3,41 +3,28 @@
  */
 
 import {
-  Env,
   Message,
   ChatCompletionResponse,
   OneMinChatResponse,
   ChatCompletionRequest,
 } from "../types";
-import { OneMinApiService } from "../services";
 import {
   createErrorResponse,
   createSuccessResponse,
   createErrorResponseFromError,
   WebSearchConfig,
-  ModelNotFoundError,
-  processMessagesWithImageCheck,
-  parseAndValidateModel,
+  validateModelAndMessages,
 } from "../utils";
 import {
   createOpenAISSEChunk,
   writeSSEEvent,
   writeSSEDone,
-  createSSEResponse,
 } from "../utils/sse";
-import { supportsVision } from "../utils/model-capabilities";
-import { SimpleUTF8Decoder } from "../utils/utf8-decoder";
-import { ALL_ONE_MIN_AVAILABLE_MODELS, DEFAULT_MODEL } from "../constants";
+import { executeStreamingPipeline } from "../utils/streaming";
+import { DEFAULT_MODEL } from "../constants";
+import { BaseTextHandler } from "./base";
 
-export class ChatHandler {
-  private env: Env;
-  private apiService: OneMinApiService;
-
-  constructor(env: Env) {
-    this.env = env;
-    this.apiService = new OneMinApiService(env);
-  }
-
+export class ChatHandler extends BaseTextHandler {
   async handleChatCompletions(request: Request): Promise<Response> {
     try {
       const requestBody: ChatCompletionRequest = await request.json();
@@ -60,39 +47,14 @@ export class ChatHandler {
         );
       }
 
-      // Set default model if not provided
       const rawModel = requestBody.model || DEFAULT_MODEL;
 
-      // Parse model name and get web search configuration
-      const parseResult = parseAndValidateModel(rawModel, this.env);
-      if (parseResult.error) {
-        return createErrorResponse(
-          parseResult.error,
-          400,
-          "invalid_request_error",
-          "model_not_found",
+      const { cleanModel, webSearchConfig, processedMessages } =
+        validateModelAndMessages(
+          rawModel,
+          requestBody.messages as Message[],
+          this.env,
         );
-      }
-
-      const { cleanModel, webSearchConfig } = parseResult;
-
-      // Validate that the clean model exists in our supported models
-      if (!ALL_ONE_MIN_AVAILABLE_MODELS.includes(cleanModel)) {
-        throw new ModelNotFoundError(cleanModel);
-      }
-
-      // Process messages and check for images in a single pass
-      const { processedMessages, hasImages } = processMessagesWithImageCheck(
-        requestBody.messages as Message[],
-      );
-      if (hasImages && !supportsVision(cleanModel)) {
-        return createErrorResponse(
-          `Model '${cleanModel}' does not support image inputs`,
-          400,
-          "invalid_request_error",
-          "model_not_supported",
-        );
-      }
 
       // Handle streaming vs non-streaming
       if (requestBody.stream) {
@@ -177,47 +139,21 @@ export class ChatHandler {
         apiKey,
       );
 
-      // Create streaming response
-      const { readable, writable } = new TransformStream();
-      const writer = writable.getWriter();
-
-      // Process the stream
-      const reader = response.body?.getReader();
-      if (!reader) {
-        await writer.close();
-        return createSSEResponse(readable);
-      }
-
-      // Start streaming process (don't await, let it run in background)
-      (async () => {
-        try {
-          const utf8Decoder = new SimpleUTF8Decoder();
-
-          while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
-
-            const chunk = utf8Decoder.decode(value, done);
-            const returnChunk = createOpenAISSEChunk(
-              model,
-              { content: chunk },
-              null,
-            );
-            await writeSSEEvent(writer, returnChunk);
-          }
-
-          // Send final chunk
+      return executeStreamingPipeline(response, {
+        onChunk: async (writer, chunk) => {
+          const returnChunk = createOpenAISSEChunk(
+            model,
+            { content: chunk },
+            null,
+          );
+          await writeSSEEvent(writer, returnChunk);
+        },
+        onEnd: async (writer) => {
           const finalChunk = createOpenAISSEChunk(model, {}, "stop");
           await writeSSEEvent(writer, finalChunk);
           await writeSSEDone(writer);
-          await writer.close();
-        } catch (error) {
-          console.error("Streaming error:", error);
-          await writer.abort(error);
-        }
-      })();
-
-      return createSSEResponse(readable);
+        },
+      });
     } catch (error) {
       console.error("Streaming chat error:", error);
       return createErrorResponse(

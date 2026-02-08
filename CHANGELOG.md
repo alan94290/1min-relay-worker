@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.7.1] - 2026-02-09
+
+### Changed
+- **Handler Refactoring**: Eliminated HIGH priority code duplication across `ChatHandler`, `ResponseHandler`, and `MessagesHandler`
+  - Created `BaseTextHandler` base class with shared `env`/`apiService` constructor
+  - Extracted `estimateInputTokens()` to shared `src/utils/tokens.ts` utility
+  - Extracted `validateModelAndMessages()` to `src/utils/model-validation.ts` — consolidates model parsing, model list check, image processing, and vision validation into a single call that throws typed errors
+  - Extracted `executeStreamingPipeline()` to `src/utils/streaming.ts` — eliminates duplicated TransformStream/reader/writer/UTF-8 decoder boilerplate; handlers now only provide `onStart`/`onChunk`/`onEnd` callbacks
+
+### Fixed
+- **Anthropic Image Error Status Code**: `extractAnthropicContent` now throws `ValidationError` (400) instead of bare `Error` (500) when unsupported image content blocks are sent via the Anthropic Messages API
+- **Error Message Leakage**: Messages handler API calls now wrap upstream errors in `ApiError("Failed to process message")` to prevent leaking internal URLs or stack traces to clients
+- **Unhandled Promise Rejection**: Fixed `void writer.close()` in streaming pipeline to properly handle the promise with `.catch()`
+
 ## [3.7.0] - 2026-02-08
 
 ### Added

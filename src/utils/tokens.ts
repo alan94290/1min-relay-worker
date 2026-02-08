@@ -3,6 +3,8 @@
  */
 
 import { encode } from "gpt-tokenizer";
+import { extractAllMessageText } from "./message-processing";
+import { Message } from "../types";
 
 const CHAR_TO_TOKEN_RATIO = 4;
 const TOKEN_CACHE = new Map<string, number>();
@@ -40,6 +42,13 @@ export function calculateTokens(
   TOKEN_CACHE.set(cacheKey, tokenCount);
 
   return tokenCount;
+}
+
+/**
+ * Estimate input tokens from a messages array
+ */
+export function estimateInputTokens(messages: Message[]): number {
+  return calculateTokens(extractAllMessageText(messages));
 }
 
 function estimateTokenCount(text: string): number {

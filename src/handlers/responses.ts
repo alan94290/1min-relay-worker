@@ -5,7 +5,6 @@
  */
 
 import {
-  Env,
   ResponseRequest,
   ResponseInputItem,
   Message,
@@ -14,34 +13,21 @@ import {
   ResponsesOutputMessage,
   ResponseFormat,
 } from "../types";
-import { OneMinApiService } from "../services";
 import {
   createErrorResponse,
   createSuccessResponse,
+  createErrorResponseFromError,
   WebSearchConfig,
-  processMessagesWithImageCheck,
-  parseAndValidateModel,
+  validateModelAndMessages,
   calculateTokens,
-  extractAllMessageText,
+  estimateInputTokens,
 } from "../utils";
-import {
-  createSSEResponse,
-  writeSSEEventWithType,
-  writeSSEDone,
-} from "../utils/sse";
-import { supportsVision } from "../utils/model-capabilities";
-import { SimpleUTF8Decoder } from "../utils/utf8-decoder";
-import { ALL_ONE_MIN_AVAILABLE_MODELS, DEFAULT_MODEL } from "../constants";
+import { writeSSEEventWithType, writeSSEDone } from "../utils/sse";
+import { executeStreamingPipeline } from "../utils/streaming";
+import { DEFAULT_MODEL } from "../constants";
+import { BaseTextHandler } from "./base";
 
-export class ResponseHandler {
-  private env: Env;
-  private apiService: OneMinApiService;
-
-  constructor(env: Env) {
-    this.env = env;
-    this.apiService = new OneMinApiService(env);
-  }
-
+export class ResponseHandler extends BaseTextHandler {
   async handleResponses(request: Request): Promise<Response> {
     try {
       const requestBody: ResponseRequest = await request.json();
@@ -90,43 +76,10 @@ export class ResponseHandler {
         }
       }
 
-      // Set default model if not provided
       const rawModel = requestBody.model || DEFAULT_MODEL;
 
-      // Parse model name and get web search configuration
-      const parseResult = parseAndValidateModel(rawModel, this.env);
-      if (parseResult.error) {
-        return createErrorResponse(
-          parseResult.error,
-          400,
-          "invalid_request_error",
-          "model_not_found",
-        );
-      }
-
-      const { cleanModel, webSearchConfig } = parseResult;
-
-      // Validate that the clean model exists in our supported models
-      if (!ALL_ONE_MIN_AVAILABLE_MODELS.includes(cleanModel)) {
-        return createErrorResponse(
-          `The model '${cleanModel}' does not exist`,
-          400,
-          "invalid_request_error",
-          "model_not_found",
-        );
-      }
-
-      // Process messages and check for images in a single pass
-      const { processedMessages, hasImages } =
-        processMessagesWithImageCheck(messages);
-      if (hasImages && !supportsVision(cleanModel)) {
-        return createErrorResponse(
-          `Model '${cleanModel}' does not support image inputs`,
-          400,
-          "invalid_request_error",
-          "model_not_supported",
-        );
-      }
+      const { cleanModel, webSearchConfig, processedMessages } =
+        validateModelAndMessages(rawModel, messages, this.env);
 
       if (requestBody.stream) {
         return this.handleStreamingResponse(
@@ -153,7 +106,7 @@ export class ResponseHandler {
       );
     } catch (error) {
       console.error("Response error:", error);
-      return createErrorResponse("Internal server error", 500);
+      return createErrorResponseFromError(error);
     }
   }
 
@@ -266,23 +219,11 @@ export class ResponseHandler {
         apiKey,
       );
 
-      const { readable, writable } = new TransformStream();
-      const writer = writable.getWriter();
-
-      const reader = response.body?.getReader();
-      if (!reader) {
-        await writer.close();
-        return createSSEResponse(readable);
-      }
-
       const responseId = `resp-${crypto.randomUUID()}`;
       const messageId = `msg-${crypto.randomUUID()}`;
 
-      (async () => {
-        try {
-          const utf8Decoder = new SimpleUTF8Decoder();
-          const contentChunks: string[] = [];
-
+      return executeStreamingPipeline(response, {
+        onStart: async (writer) => {
           // Send response.created
           const initialResponse: ResponsesAPIResponse = {
             id: responseId,
@@ -319,30 +260,16 @@ export class ResponseHandler {
             content_index: 0,
             part: { type: "output_text", text: "" },
           });
-
-          // Stream content deltas
-          while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
-
-            const chunk = utf8Decoder.decode(value, done);
-            if (chunk) {
-              contentChunks.push(chunk);
-              await writeSSEEventWithType(
-                writer,
-                "response.output_text.delta",
-                {
-                  type: "response.output_text.delta",
-                  output_index: 0,
-                  content_index: 0,
-                  delta: chunk,
-                },
-              );
-            }
-          }
-
-          const accumulatedContent = contentChunks.join("");
-
+        },
+        onChunk: async (writer, chunk) => {
+          await writeSSEEventWithType(writer, "response.output_text.delta", {
+            type: "response.output_text.delta",
+            output_index: 0,
+            content_index: 0,
+            delta: chunk,
+          });
+        },
+        onEnd: async (writer, accumulatedContent) => {
           // Send text done
           await writeSSEEventWithType(writer, "response.output_text.done", {
             type: "response.output_text.done",
@@ -375,7 +302,7 @@ export class ResponseHandler {
 
           // Send response.done
           const outputTokens = calculateTokens(accumulatedContent, model);
-          const inputTokens = this.estimateInputTokens(messages);
+          const inputTokens = estimateInputTokens(messages);
           const finalResponse: ResponsesAPIResponse = {
             id: responseId,
             object: "response",
@@ -395,14 +322,8 @@ export class ResponseHandler {
           });
 
           await writeSSEDone(writer);
-          await writer.close();
-        } catch (error) {
-          console.error("Responses streaming error:", error);
-          await writer.abort(error);
-        }
-      })();
-
-      return createSSEResponse(readable);
+        },
+      });
     } catch (error) {
       console.error("Streaming response error:", error);
       return createErrorResponse("Failed to process streaming response", 500);
@@ -467,10 +388,6 @@ export class ResponseHandler {
     }
 
     return enhancedMessages;
-  }
-
-  private estimateInputTokens(messages: Message[]): number {
-    return calculateTokens(extractAllMessageText(messages));
   }
 
   private transformToResponsesFormat(
