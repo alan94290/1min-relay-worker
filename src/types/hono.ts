@@ -25,7 +25,7 @@ export interface AuthContext {
 export interface ApiError {
   error: string;
   code?: string;
-  details?: any;
+  details?: Record<string, unknown>;
 }
 
 export interface RateLimitContext {

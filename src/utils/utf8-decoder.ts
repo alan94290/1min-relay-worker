@@ -9,9 +9,9 @@ export class UTF8SafeDecoder {
 
   constructor() {
     // Use 'stream' option to handle incomplete sequences
-    this.decoder = new TextDecoder('utf-8', {
-      fatal: false,  // Don't throw on invalid sequences
-      ignoreBOM: true
+    this.decoder = new TextDecoder("utf-8", {
+      fatal: false, // Don't throw on invalid sequences
+      ignoreBOM: true,
     });
   }
 
@@ -68,19 +68,19 @@ export class UTF8SafeDecoder {
       if ((byte & 0x80) === 0) {
         // ASCII character (0xxxxxxx)
         return i + 1;
-      } else if ((byte & 0xE0) === 0xC0) {
+      } else if ((byte & 0xe0) === 0xc0) {
         // 2-byte sequence start (110xxxxx)
         if (i + 2 <= bytes.length) {
           return i + 2;
         }
         return i;
-      } else if ((byte & 0xF0) === 0xE0) {
+      } else if ((byte & 0xf0) === 0xe0) {
         // 3-byte sequence start (1110xxxx)
         if (i + 3 <= bytes.length) {
           return i + 3;
         }
         return i;
-      } else if ((byte & 0xF8) === 0xF0) {
+      } else if ((byte & 0xf8) === 0xf0) {
         // 4-byte sequence start (11110xxx)
         if (i + 4 <= bytes.length) {
           return i + 4;
@@ -99,9 +99,9 @@ export class UTF8SafeDecoder {
    */
   reset(): void {
     this.pendingBytes = null;
-    this.decoder = new TextDecoder('utf-8', {
+    this.decoder = new TextDecoder("utf-8", {
       fatal: false,
-      ignoreBOM: true
+      ignoreBOM: true,
     });
   }
 }
@@ -113,9 +113,9 @@ export class SimpleUTF8Decoder {
   private decoder: TextDecoder;
 
   constructor() {
-    this.decoder = new TextDecoder('utf-8', {
+    this.decoder = new TextDecoder("utf-8", {
       fatal: false,
-      ignoreBOM: true
+      ignoreBOM: true,
     });
   }
 
@@ -125,9 +125,9 @@ export class SimpleUTF8Decoder {
   }
 
   reset(): void {
-    this.decoder = new TextDecoder('utf-8', {
+    this.decoder = new TextDecoder("utf-8", {
       fatal: false,
-      ignoreBOM: true
+      ignoreBOM: true,
     });
   }
 }

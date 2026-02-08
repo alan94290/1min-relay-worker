@@ -17,7 +17,8 @@ export const DEFAULT_IMAGE_MODEL = "flux-schnell";
 export const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization",
+  "Access-Control-Allow-Headers":
+    "Content-Type, Authorization, x-api-key, anthropic-version",
   "Access-Control-Max-Age": "86400",
 };
 
@@ -25,6 +26,7 @@ export const CORS_HEADERS = {
 export const API_ENDPOINTS = {
   CHAT_COMPLETIONS: "/v1/chat/completions",
   RESPONSES: "/v1/responses",
+  MESSAGES: "/v1/messages",
   IMAGES_GENERATIONS: "/v1/images/generations",
   MODELS: "/v1/models",
 } as const;

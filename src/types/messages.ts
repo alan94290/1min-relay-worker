@@ -18,13 +18,9 @@ export interface ImageContent {
 export type MessageContent = string | (TextContent | ImageContent)[];
 
 export interface Message {
-  role: "system" | "user" | "assistant" | "function";
+  role: "system" | "user" | "assistant";
   content: MessageContent;
   name?: string;
-  function_call?: {
-    name: string;
-    arguments: string;
-  };
 }
 
 export interface ProcessedMessage extends Message {

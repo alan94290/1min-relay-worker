@@ -24,7 +24,7 @@ app.onError((err, c) => {
         code: "internal_error",
       },
     },
-    500
+    500,
   );
 });
 

@@ -3,6 +3,7 @@
  */
 
 import { RETRIEVAL_SUPPORTED_MODELS } from "../constants/models";
+import { Env } from "../types";
 
 export interface ModelParseResult {
   originalModel: string;
@@ -100,7 +101,7 @@ export class ModelParser {
   /**
    * Get web search configuration with default values
    */
-  static getWebSearchConfig(env?: any): WebSearchConfig {
+  static getWebSearchConfig(env?: Partial<Env>): WebSearchConfig {
     // Allow environment variables to override default values
     const numOfSite = env?.WEB_SEARCH_NUM_OF_SITE
       ? parseInt(env.WEB_SEARCH_NUM_OF_SITE, 10)
@@ -133,7 +134,7 @@ export class ModelParser {
    */
   static parseAndGetConfig(
     modelName: string,
-    env?: any
+    env?: Partial<Env>,
   ): {
     cleanModel: string;
     webSearchConfig?: WebSearchConfig;

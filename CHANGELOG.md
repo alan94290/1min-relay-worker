@@ -7,6 +7,74 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.7.0] - 2026-02-08
+
+### Added
+- **Alibaba Qwen Chat Models** (new provider):
+  - `qwen3-max` - Qwen3 Max
+  - `qwen-plus` - Qwen Plus
+  - `qwen-max` - Qwen Max
+  - `qwen-flash` - Qwen Flash
+- **New Anthropic Model**:
+  - `claude-opus-4-1-20250805` - Claude 4.1 Opus
+- **New Cohere Model**:
+  - `command-r-08-2024` - Command R (replaces deprecated `command`)
+- **New Mistral Models**:
+  - `magistral-small-latest` - Magistral Small 1.2
+  - `magistral-medium-latest` - Magistral Medium 1.2
+  - `ministral-14b-latest` - Ministral 14B
+  - `open-mistral-nemo` - Mistral Open Nemo (replaces `mistral-nemo`)
+  - `mistral-medium-latest` - Mistral Medium 3.1
+- **New OpenAI Reasoning Models**:
+  - `o3` - OpenAI o3
+  - `o3-pro` - OpenAI o3 Pro
+  - `o3-deep-research` - OpenAI o3 Deep Research
+  - `o4-mini-deep-research` - OpenAI o4 Mini Deep Research
+- **New Perplexity Model**:
+  - `sonar-deep-research` - Perplexity Deep Research
+- **Alibaba Qwen Vision Models**:
+  - `qwen-vl-max` - Qwen VL Max (vision)
+  - `qwen-vl-plus` - Qwen VL Plus (vision)
+  - `qwen3-vl-flash` - Qwen3 VL Flash (vision)
+  - `qwen3-vl-plus` - Qwen3 VL Plus (vision)
+- **Expanded Vision Support**: Updated `VISION_SUPPORTED_MODELS` based on 1min.ai `CHAT_WITH_IMAGE` capability data
+  - Added all Anthropic Claude 4.x models (6 models)
+  - Added all GoogleAI Gemini 2.5+ models (3 models)
+  - Added OpenAI `gpt-5.1`, `gpt-5.2`
+  - Added Alibaba Qwen VL series (4 models)
+  - Total vision models: 8 → 25
+- **Alibaba Qwen Coder Models**:
+  - `qwen3-coder-plus` - Qwen3 Coder Plus
+  - `qwen3-coder-flash` - Qwen3 Coder Flash
+- **New xAI Model**:
+  - `grok-code-fast-1` - Grok Code Fast 1
+- All new chat models support web search/retrieval (`:online` suffix)
+
+### Removed
+- **Deprecated OpenAI Models**: `gpt-4`, `gpt-4.5-preview`, `o1`, `o1-mini`
+- **Deprecated Anthropic Models**: `claude-2.1`, `claude-instant-1.2`, `claude-3-haiku-20240307`, `claude-3-sonnet-20240229`, `claude-3-opus-20240229`, `claude-3-5-haiku-20241022`, `claude-3-5-sonnet-20240620`, `claude-3-7-sonnet-20250219`
+- **Deprecated GoogleAI Models**: `gemini-1.0-pro`, `gemini-1.5-flash`, `gemini-1.5-pro`, `gemini-2.0-flash`, `gemini-2.0-flash-lite`, `gemini-2.5-flash-preview-04-17`, `gemini-2.5-flash-preview-05-20`, `gemini-2.5-pro-preview-05-06`
+- **Deprecated Mistral Models**: `mistral-nemo`, `open-mistral-7b`, `open-mixtral-8x22b`, `open-mixtral-8x7b`, `pixtral-12b`
+- **Deprecated Cohere Model**: `command` (replaced by `command-r-08-2024`)
+- **Deprecated Perplexity Model**: `sonar-reasoning`
+- **Deprecated xAI Model**: `grok-2`
+
+### Removed (Breaking)
+- **Function Calling Support**: Removed prompt-engineering-based function calling emulation
+  - Deleted `src/utils/function-calling.ts` and `src/types/function-calling.ts`
+  - Removed `FUNCTION_CALLING_SUPPORTED_MODELS` constant
+  - Removed `supportsFunctionCalling()` capability check
+  - Removed `function_calling` from model capabilities in `/v1/models` response
+  - Removed `function_call` and `tool_calls` fields from chat completion response types
+  - Removed `function` and `tool` from Message role types
+  - Simplified chat handler streaming logic (no more function call accumulation/parsing)
+  - 1min.ai API does not natively support function calling; the emulation was unreliable
+
+### Changed
+- **Model Constants**: Synced `ALL_ONE_MIN_AVAILABLE_MODELS` with 1min.ai API docs (2026-02-08)
+- **Retrieval Support**: Synced `RETRIEVAL_SUPPORTED_MODELS` with 1min.ai official web search list (52 → 18 models)
+- **Code Interpreter**: Updated `CODE_INTERPRETER_SUPPORTED_MODELS` — removed deprecated Claude 3.x models
+
 ## [3.6.9] - 2025-02-05
 
 ### Added

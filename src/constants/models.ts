@@ -2,18 +2,16 @@
  * Model definitions and supported features
  */
 
-// Define available models (synced with utils/constants.py)
+// Define available models (synced with 1min.ai docs 2026-02-08)
 export const ALL_ONE_MIN_AVAILABLE_MODELS = [
   // OpenAI
   "dall-e-2", // Image generation
   "dall-e-3", // Image generation
   "gpt-3.5-turbo",
-  "gpt-4",
   "gpt-4-turbo",
   "gpt-4.1",
   "gpt-4.1-mini",
   "gpt-4.1-nano",
-  "gpt-4.5-preview",
   "gpt-4o",
   "gpt-4o-mini",
   "gpt-5",
@@ -25,50 +23,37 @@ export const ALL_ONE_MIN_AVAILABLE_MODELS = [
   "gpt-5.1-codex-mini",
   "gpt-5.2",
   "gpt-5.2-pro",
-  "o1",
-  "o1-mini",
+  "o3",
+  "o3-deep-research",
   "o3-mini",
+  "o3-pro",
   "o4-mini",
+  "o4-mini-deep-research",
   "openai/gpt-oss-120b",
   "openai/gpt-oss-20b",
   "tts-1", // Text-to-speech
   "tts-1-hd", // Text-to-speech HD
   "whisper-1", // Speech recognition
-  // Claude
-  "claude-2.1",
-  "claude-3-5-haiku-20241022",
-  "claude-3-5-sonnet-20240620",
-  "claude-3-7-sonnet-20250219",
-  "claude-3-haiku-20240307",
-  "claude-3-opus-20240229",
-  "claude-3-sonnet-20240229",
+  // Anthropic
   "claude-haiku-4-5-20251001",
-  "claude-instant-1.2",
+  "claude-opus-4-1-20250805",
   "claude-opus-4-20250514",
   "claude-opus-4-5-20251101",
   "claude-sonnet-4-20250514",
   "claude-sonnet-4-5-20250929",
   // GoogleAI
-  "gemini-1.0-pro",
-  "gemini-1.5-flash",
-  "gemini-1.5-pro",
-  "gemini-2.0-flash",
-  "gemini-2.0-flash-lite",
   "gemini-2.5-flash",
-  "gemini-2.5-flash-preview-04-17",
-  "gemini-2.5-flash-preview-05-20",
   "gemini-2.5-pro",
-  "gemini-2.5-pro-preview-05-06",
   "gemini-3-pro-preview",
   // MistralAI
+  "magistral-medium-latest",
+  "magistral-small-latest",
+  "ministral-14b-latest",
   "mistral-large-latest",
-  "mistral-nemo",
+  "mistral-medium-latest",
   "mistral-small-latest",
-  "open-mistral-7b",
-  "open-mixtral-8x22b",
-  "open-mixtral-8x7b",
-  "pixtral-12b",
-  // Replicate
+  "open-mistral-nemo",
+  // Replicate (Meta)
   "meta/llama-2-70b-chat",
   "meta/llama-4-maverick-instruct",
   "meta/llama-4-scout-instruct",
@@ -78,19 +63,32 @@ export const ALL_ONE_MIN_AVAILABLE_MODELS = [
   "deepseek-chat",
   "deepseek-reasoner",
   // Cohere
-  "command",
+  "command-r-08-2024",
   // xAI
-  "grok-2",
   "grok-3",
   "grok-3-mini",
   "grok-4-0709",
   "grok-4-fast-non-reasoning",
   "grok-4-fast-reasoning",
+  "grok-code-fast-1",
   // Perplexity Sonar
   "sonar",
+  "sonar-deep-research",
   "sonar-pro",
-  "sonar-reasoning",
   "sonar-reasoning-pro",
+  // Alibaba (Qwen chat)
+  "qwen-flash",
+  "qwen-max",
+  "qwen-plus",
+  "qwen3-max",
+  // Alibaba (Qwen coder)
+  "qwen3-coder-flash",
+  "qwen3-coder-plus",
+  // Alibaba (Qwen vision)
+  "qwen-vl-max",
+  "qwen-vl-plus",
+  "qwen3-vl-flash",
+  "qwen3-vl-plus",
   // Leonardo.ai models
   "albedo-base-xl", // Leonardo.ai base model
   "anime-xl", // Leonardo.ai anime style
@@ -107,7 +105,7 @@ export const ALL_ONE_MIN_AVAILABLE_MODELS = [
   "flux-dev", // Flux development model
   "flux-pro", // Flux professional model
   "flux-schnell", // Flux fast generation
-  // Qwen models
+  // Qwen media models
   "qwen-image-plus", // Qwen image generation plus
   "qwen-image-max", // Qwen image generation max
   "qwen-image-edit-plus", // Qwen image editing plus
@@ -116,22 +114,40 @@ export const ALL_ONE_MIN_AVAILABLE_MODELS = [
   "qwen3-livetranslate-flash", // Qwen live translation flash
 ];
 
-// Define models that support vision inputs (synced with utils/constants.py)
+// Define models that support vision inputs (CHAT_WITH_IMAGE)
 export const VISION_SUPPORTED_MODELS = [
+  // Anthropic
+  "claude-haiku-4-5-20251001",
+  "claude-opus-4-1-20250805",
+  "claude-opus-4-20250514",
+  "claude-opus-4-5-20251101",
+  "claude-sonnet-4-20250514",
+  "claude-sonnet-4-5-20250929",
+  // GoogleAI
+  "gemini-2.5-flash",
+  "gemini-2.5-pro",
+  "gemini-3-pro-preview",
+  // OpenAI
   "gpt-4-turbo",
   "gpt-4o",
   "gpt-4o-mini",
   "gpt-5",
   "gpt-5-chat-latest",
   "gpt-5-mini",
+  "gpt-5.1",
+  "gpt-5.2",
+  // xAI
   "grok-4-fast-non-reasoning",
-  "grok-4-fast-reasoning"
+  "grok-4-fast-reasoning",
+  // Alibaba (Qwen VL)
+  "qwen-vl-max",
+  "qwen-vl-plus",
+  "qwen3-vl-flash",
+  "qwen3-vl-plus",
 ];
 
 // Define models that support code interpreter
 export const CODE_INTERPRETER_SUPPORTED_MODELS = [
-  "claude-3-5-haiku-20241022",
-  "claude-3-5-sonnet-20240620",
   "claude-opus-4-20250514",
   "claude-sonnet-4-20250514",
   "deepseek-chat",
@@ -142,68 +158,32 @@ export const CODE_INTERPRETER_SUPPORTED_MODELS = [
 ];
 
 // Define models that support web search (retrieval)
+// Synced with 1min.ai web search supported models 2026-02-08
 export const RETRIEVAL_SUPPORTED_MODELS = [
-  "claude-3-5-haiku-20241022",
-  "claude-3-5-sonnet-20240620",
-  "claude-3-haiku-20240307",
-  "claude-3-opus-20240229",
-  "claude-3-sonnet-20240229",
+  // Anthropic
   "claude-haiku-4-5-20251001",
-  "claude-opus-4-20250514",
+  "claude-opus-4-1-20250805",
   "claude-opus-4-5-20251101",
   "claude-sonnet-4-20250514",
   "claude-sonnet-4-5-20250929",
-  "command",
+  // DeepSeek
   "deepseek-chat",
   "deepseek-reasoner",
-  "gemini-1.0-pro",
-  "gemini-1.5-flash",
-  "gemini-1.5-pro",
-  "gemini-2.0-flash",
-  "gemini-2.0-flash-lite",
-  "gemini-2.5-flash",
-  "gemini-2.5-pro",
+  // GoogleAI
   "gemini-3-pro-preview",
-  "gpt-3.5-turbo",
-  "gpt-4-turbo",
+  // OpenAI
   "gpt-4o",
-  "gpt-4o-mini",
   "gpt-5",
   "gpt-5-chat-latest",
-  "gpt-5-mini",
-  "gpt-5-nano",
-  "gpt-5.1",
   "gpt-5.1-codex",
   "gpt-5.1-codex-mini",
-  "gpt-5.2",
-  "gpt-5.2-pro",
-  "grok-2",
-  "grok-3",
-  "grok-3-mini",
-  "grok-4-0709",
-  "grok-4-fast-non-reasoning",
-  "grok-4-fast-reasoning",
-  "meta/llama-2-70b-chat",
-  "meta/meta-llama-3-70b-instruct",
-  "meta/meta-llama-3.1-405b-instruct",
-  "mistral-large-latest",
-  "mistral-nemo",
-  "mistral-small-latest",
-  "o1-mini",
-  "o3-mini",
-  "o4-mini",
-  "open-mistral-7b",
-  "open-mixtral-8x22b",
-  "open-mixtral-8x7b",
-  "pixtral-12b",
-  "sonar",
-  "sonar-pro",
-  "sonar-reasoning",
-  "sonar-reasoning-pro",
+  "o3",
+  // xAI
+  "grok-code-fast-1",
+  // Alibaba
+  "qwen3-coder-flash",
+  "qwen3-coder-plus",
 ];
-
-// Define models that support function calling
-export const FUNCTION_CALLING_SUPPORTED_MODELS = ["gpt-3.5-turbo", "gpt-4"];
 
 // Define models that support image generation (synced with utils/constants.py)
 export const IMAGE_GENERATION_MODELS = [

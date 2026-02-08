@@ -25,7 +25,7 @@ export function isImageUrl(url: string): boolean {
  * @returns Image URL if found, null otherwise
  */
 export function extractImageFromContent(
-  content: MessageContent
+  content: MessageContent,
 ): string | null {
   if (typeof content === "string") {
     return null;
@@ -86,7 +86,7 @@ export async function processImageUrl(imageUrl: string): Promise<ArrayBuffer> {
     });
     if (!response.ok) {
       throw new Error(
-        `Failed to fetch image: ${response.status} ${response.statusText}`
+        `Failed to fetch image: ${response.status} ${response.statusText}`,
       );
     }
     return await response.arrayBuffer();
@@ -103,7 +103,7 @@ export async function processImageUrl(imageUrl: string): Promise<ArrayBuffer> {
 export async function uploadImageToAsset(
   imageData: ArrayBuffer,
   apiKey: string,
-  assetUrl: string
+  assetUrl: string,
 ): Promise<string> {
   const formData = new FormData();
   const filename = `relay${crypto.randomUUID()}`;
@@ -122,7 +122,7 @@ export async function uploadImageToAsset(
   if (!response.ok) {
     const errorText = await response.text();
     throw new Error(
-      `Failed to upload image: ${response.status} ${response.statusText} - ${errorText}`
+      `Failed to upload image: ${response.status} ${response.statusText} - ${errorText}`,
     );
   }
 
@@ -141,7 +141,7 @@ export async function uploadImageToAsset(
  * @returns Combined text content
  */
 export function extractTextFromContent(
-  content: (TextContent | ImageContent)[]
+  content: (TextContent | ImageContent)[],
 ): string {
   return content
     .filter((item): item is TextContent => item.type === "text")

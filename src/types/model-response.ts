@@ -6,7 +6,6 @@ export interface ModelCapabilities {
   vision: boolean;
   code_interpreter: boolean;
   retrieval: boolean;
-  function_calling: boolean;
 }
 
 export interface ModelObject {

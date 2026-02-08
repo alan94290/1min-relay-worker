@@ -2,7 +2,7 @@
  * Response type definitions for API endpoints
  */
 
-export interface OneMinResponse {
+export interface OneMinChatResponse {
   requestId?: string;
   content?: string;
   aiRecord?: {
@@ -16,6 +16,9 @@ export interface OneMinResponse {
     total_tokens: number;
   };
 }
+
+/** @deprecated Use OneMinChatResponse instead */
+export type OneMinResponse = OneMinChatResponse;
 
 export interface OneMinImageResponse {
   aiRecord: {

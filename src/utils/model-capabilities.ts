@@ -7,7 +7,6 @@ import {
   VISION_SUPPORTED_MODELS,
   CODE_INTERPRETER_SUPPORTED_MODELS,
   RETRIEVAL_SUPPORTED_MODELS,
-  FUNCTION_CALLING_SUPPORTED_MODELS,
   IMAGE_GENERATION_MODELS,
   TEXT_TO_SPEECH_MODELS,
   SPEECH_TO_TEXT_MODELS,
@@ -32,13 +31,6 @@ export function supportsCodeInterpreter(model: string): boolean {
  */
 export function supportsRetrieval(model: string): boolean {
   return RETRIEVAL_SUPPORTED_MODELS.includes(model);
-}
-
-/**
- * Check if a model supports function calling
- */
-export function supportsFunctionCalling(model: string): boolean {
-  return FUNCTION_CALLING_SUPPORTED_MODELS.includes(model);
 }
 
 /**
@@ -70,7 +62,6 @@ export function getModelCapabilities(model: string) {
     vision: supportsVision(model),
     codeInterpreter: supportsCodeInterpreter(model),
     retrieval: supportsRetrieval(model),
-    functionCalling: supportsFunctionCalling(model),
     imageGeneration: supportsImageGeneration(model),
     textToSpeech: supportsTextToSpeech(model),
     speechToText: supportsSpeechToText(model),
@@ -87,8 +78,7 @@ export function validateModelCapabilities(
     vision?: boolean;
     codeInterpreter?: boolean;
     retrieval?: boolean;
-    functionCalling?: boolean;
-  }
+  },
 ): void {
   const capabilities = getModelCapabilities(model);
 
@@ -102,9 +92,5 @@ export function validateModelCapabilities(
 
   if (requirements.retrieval && !capabilities.retrieval) {
     throw new Error(`Model '${model}' does not support web search/retrieval`);
-  }
-
-  if (requirements.functionCalling && !capabilities.functionCalling) {
-    throw new Error(`Model '${model}' does not support function calling`);
   }
 }
