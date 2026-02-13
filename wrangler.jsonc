@@ -45,7 +45,7 @@
   "kv_namespaces": [
     {
       "binding": "RATE_LIMIT_STORE",
-      "id": "[your-kv-namespace-id]", // IMPORTANT: Change this to your KV namespace ID
+      "id": "10f47b11d3a54415a90405db8c84784b", // IMPORTANT: Change this to your KV namespace ID
     },
   ],
 
