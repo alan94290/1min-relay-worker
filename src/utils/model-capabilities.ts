@@ -4,13 +4,14 @@
  */
 
 import {
-  VISION_SUPPORTED_MODELS,
   CODE_INTERPRETER_SUPPORTED_MODELS,
-  RETRIEVAL_SUPPORTED_MODELS,
   IMAGE_GENERATION_MODELS,
-  TEXT_TO_SPEECH_MODELS,
+  RETRIEVAL_SUPPORTED_MODELS,
   SPEECH_TO_TEXT_MODELS,
+  TEXT_TO_SPEECH_MODELS,
+  VISION_SUPPORTED_MODELS,
 } from "../constants";
+import { ValidationError } from "./errors";
 
 /**
  * Check if a model supports vision/image inputs
@@ -83,14 +84,26 @@ export function validateModelCapabilities(
   const capabilities = getModelCapabilities(model);
 
   if (requirements.vision && !capabilities.vision) {
-    throw new Error(`Model '${model}' does not support image inputs`);
+    throw new ValidationError(
+      `Model '${model}' does not support image inputs`,
+      "model",
+      "model_not_supported",
+    );
   }
 
   if (requirements.codeInterpreter && !capabilities.codeInterpreter) {
-    throw new Error(`Model '${model}' does not support code interpreter`);
+    throw new ValidationError(
+      `Model '${model}' does not support code interpreter`,
+      "model",
+      "model_not_supported",
+    );
   }
 
   if (requirements.retrieval && !capabilities.retrieval) {
-    throw new Error(`Model '${model}' does not support web search/retrieval`);
+    throw new ValidationError(
+      `Model '${model}' does not support web search/retrieval`,
+      "model",
+      "model_not_supported",
+    );
   }
 }

@@ -17,9 +17,6 @@ export interface OneMinChatResponse {
   };
 }
 
-/** @deprecated Use OneMinChatResponse instead */
-export type OneMinResponse = OneMinChatResponse;
-
 export interface OneMinImageResponse {
   aiRecord: {
     temporaryUrl?: string;
@@ -30,9 +27,9 @@ export interface OneMinImageResponse {
 }
 
 export interface RateLimitRecord {
-  timestamps: number[];
+  requestCount: number;
   tokenCount: number;
-  windowStart?: number;
+  windowStart: number;
 }
 
 export interface RateLimitConfig {

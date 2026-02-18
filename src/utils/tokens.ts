@@ -3,45 +3,23 @@
  */
 
 import { encode } from "gpt-tokenizer";
+import type {
+  AnthropicMessageRequest,
+  ChatCompletionRequest,
+  Message,
+  ResponseRequest,
+} from "../types";
 import { extractAllMessageText } from "./message-processing";
-import { Message } from "../types";
 
 const CHAR_TO_TOKEN_RATIO = 4;
-const TOKEN_CACHE = new Map<string, number>();
-const MAX_CACHE_SIZE = 1000;
 
-export function calculateTokens(
-  text: string,
-  model: string = "DEFAULT",
-): number {
-  // Check cache first for performance
-  const cacheKey = `${model}:${text.length}:${text.slice(0, 50)}`;
-  if (TOKEN_CACHE.has(cacheKey)) {
-    return TOKEN_CACHE.get(cacheKey)!;
-  }
-
-  let tokenCount: number;
-
+export function calculateTokens(text: string, _model?: string): number {
   try {
-    const tokens = encode(text);
-    tokenCount = tokens.length;
+    return encode(text).length;
   } catch (error) {
     console.error("Token calculation failed:", error);
-    // More accurate fallback calculation
-    tokenCount = estimateTokenCount(text);
+    return estimateTokenCount(text);
   }
-
-  // Cache the result (with size limit)
-  if (TOKEN_CACHE.size >= MAX_CACHE_SIZE) {
-    // Remove oldest entry (simple FIFO)
-    const firstKey = TOKEN_CACHE.keys().next().value;
-    if (firstKey !== undefined) {
-      TOKEN_CACHE.delete(firstKey);
-    }
-  }
-  TOKEN_CACHE.set(cacheKey, tokenCount);
-
-  return tokenCount;
 }
 
 /**
@@ -49,6 +27,47 @@ export function calculateTokens(
  */
 export function estimateInputTokens(messages: Message[]): number {
   return calculateTokens(extractAllMessageText(messages));
+}
+
+/**
+ * Calculate token count for a Chat Completions request body.
+ */
+export function calculateChatRequestTokens(
+  body: ChatCompletionRequest,
+): number {
+  const text = extractAllMessageText(body.messages ?? []);
+  return calculateTokens(text, body.model);
+}
+
+/**
+ * Calculate token count for a Responses API request body.
+ */
+export function calculateResponseRequestTokens(body: ResponseRequest): number {
+  let text = "";
+  if (typeof body.input === "string") {
+    text = body.input;
+  } else if (body.messages) {
+    text = extractAllMessageText(body.messages);
+  }
+  return calculateTokens(text, body.model);
+}
+
+/**
+ * Calculate token count for an Anthropic Messages request body.
+ */
+export function calculateAnthropicRequestTokens(
+  body: AnthropicMessageRequest,
+): number {
+  const messageText = extractAllMessageText(body.messages ?? []);
+
+  let systemText = "";
+  if (typeof body.system === "string") {
+    systemText = body.system;
+  } else if (Array.isArray(body.system)) {
+    systemText = body.system.map((b) => b.text).join(" ");
+  }
+
+  return calculateTokens(`${systemText} ${messageText}`.trim(), body.model);
 }
 
 function estimateTokenCount(text: string): number {

@@ -1,10 +1,10 @@
 import { Hono } from "hono";
-import { HonoEnv } from "../types/hono";
-import modelsRoutes from "./models";
+import type { HonoEnv } from "../types/hono";
 import chatRoutes from "./chat";
-import responsesRoutes from "./responses";
 import imagesRoutes from "./images";
 import messagesRoutes from "./messages";
+import modelsRoutes from "./models";
+import responsesRoutes from "./responses";
 
 const app = new Hono<HonoEnv>();
 

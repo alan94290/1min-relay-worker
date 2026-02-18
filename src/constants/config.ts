@@ -13,15 +13,6 @@ export const RATE_LIMIT_CONFIG = {
 export const DEFAULT_MODEL = "mistral-nemo";
 export const DEFAULT_IMAGE_MODEL = "flux-schnell";
 
-// CORS configuration
-export const CORS_HEADERS = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-  "Access-Control-Allow-Headers":
-    "Content-Type, Authorization, x-api-key, anthropic-version",
-  "Access-Control-Max-Age": "86400",
-};
-
 // API endpoints
 export const API_ENDPOINTS = {
   CHAT_COMPLETIONS: "/v1/chat/completions",

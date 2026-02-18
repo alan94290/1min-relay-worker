@@ -3,8 +3,8 @@
  * Eliminates duplicated TransformStream/reader/writer boilerplate across handlers
  */
 
-import { SimpleUTF8Decoder } from "./utf8-decoder";
 import { createSSEResponse } from "./sse";
+import { SimpleUTF8Decoder } from "./utf8-decoder";
 
 export interface StreamingCallbacks {
   onStart?: (writer: WritableStreamDefaultWriter<Uint8Array>) => Promise<void>;

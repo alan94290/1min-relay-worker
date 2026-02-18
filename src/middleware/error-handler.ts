@@ -1,7 +1,7 @@
 import { createMiddleware } from "hono/factory";
-import { HonoEnv } from "../types/hono";
-import { toOpenAIError, toAnthropicError } from "../utils/errors";
-import { ContentfulStatusCode } from "hono/utils/http-status";
+import type { ContentfulStatusCode } from "hono/utils/http-status";
+import type { HonoEnv } from "../types/hono";
+import { toAnthropicError, toOpenAIError } from "../utils/errors";
 
 export const errorHandler = createMiddleware<HonoEnv>(async (c, next) => {
   try {

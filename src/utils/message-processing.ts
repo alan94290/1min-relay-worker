@@ -3,15 +3,13 @@
  * Used by chat, responses, and messages handlers
  */
 
-import {
+import type {
+  ImageContent,
   Message,
   MessageContent,
   TextContent,
-  ImageContent,
-  Env,
 } from "../types";
 import { extractImageFromContent } from "./image";
-import { ModelParser, WebSearchConfig } from "./model-parser";
 
 /**
  * Extract text from MessageContent (handles both string and array formats)
@@ -94,41 +92,4 @@ export function processMessagesWithImageCheck(messages: Message[]): {
     return message;
   });
   return { processedMessages, hasImages };
-}
-
-/**
- * @deprecated Use processMessagesWithImageCheck instead (single pass)
- */
-export function checkForImages(messages: Message[]): boolean {
-  for (const message of messages) {
-    if (Array.isArray(message.content)) {
-      for (const item of message.content) {
-        if (item.type === "image_url" && item.image_url?.url) {
-          return true;
-        }
-      }
-    }
-  }
-  return false;
-}
-
-/**
- * @deprecated Use processMessagesWithImageCheck instead (single pass)
- */
-export function processMessages(messages: Message[]): Message[] {
-  return processMessagesWithImageCheck(messages).processedMessages;
-}
-
-/**
- * Parse and validate model name, returning clean model and web search config
- */
-export function parseAndValidateModel(
-  modelName: string,
-  env: Env,
-): {
-  cleanModel: string;
-  webSearchConfig?: WebSearchConfig;
-  error?: string;
-} {
-  return ModelParser.parseAndGetConfig(modelName, env);
 }

@@ -1,5 +1,5 @@
 import { createMiddleware } from "hono/factory";
-import { HonoEnv } from "../types/hono";
+import type { HonoEnv } from "../types/hono";
 import { AuthenticationError } from "../utils/errors";
 
 export const authMiddleware = createMiddleware<HonoEnv>(async (c, next) => {

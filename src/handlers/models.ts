@@ -4,12 +4,12 @@
 
 import {
   ALL_ONE_MIN_AVAILABLE_MODELS,
-  VISION_SUPPORTED_MODELS,
   CODE_INTERPRETER_SUPPORTED_MODELS,
   RETRIEVAL_SUPPORTED_MODELS,
+  VISION_SUPPORTED_MODELS,
 } from "../constants";
+import type { ModelObject, ModelsResponse } from "../types";
 import { createSuccessResponse } from "../utils";
-import { ModelObject, ModelsResponse } from "../types";
 
 export function handleModelsEndpoint(): Response {
   const models: ModelObject[] = ALL_ONE_MIN_AVAILABLE_MODELS.map((model) => ({
