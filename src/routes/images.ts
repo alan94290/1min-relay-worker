@@ -1,8 +1,8 @@
 import { Hono } from "hono";
-import { HonoEnv } from "../types/hono";
 import { ImageHandler } from "../handlers";
 import { authMiddleware } from "../middleware/auth";
 import { createRateLimitMiddleware } from "../middleware/rate-limit-hono";
+import type { HonoEnv } from "../types/hono";
 
 const app = new Hono<HonoEnv>();
 

@@ -3,8 +3,7 @@
  * Used by chat, messages, and responses handlers for streaming
  */
 
-import { ChatCompletionStreamChunk } from "../types";
-import { CORS_HEADERS } from "../constants";
+import type { ChatCompletionStreamChunk } from "../types";
 
 const encoder = new TextEncoder();
 
@@ -73,7 +72,6 @@ export function createSSEResponse(readable: ReadableStream): Response {
       "Content-Type": "text/event-stream",
       "Cache-Control": "no-cache",
       Connection: "keep-alive",
-      ...CORS_HEADERS,
     },
   });
 }

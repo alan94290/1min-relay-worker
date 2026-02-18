@@ -1,11 +1,11 @@
 import { Hono } from "hono";
-import { HonoEnv } from "../types/hono";
 import { ChatHandler } from "../handlers";
 import { authMiddleware } from "../middleware/auth";
 import { createRateLimitMiddleware } from "../middleware/rate-limit-hono";
-import { calculateTokens, extractAllMessageText } from "../utils";
+import type { ChatCompletionRequest } from "../types";
+import type { HonoEnv } from "../types/hono";
+import { calculateChatRequestTokens } from "../utils";
 import { ValidationError } from "../utils/errors";
-import { ChatCompletionRequest } from "../types";
 
 const app = new Hono<HonoEnv>();
 
@@ -13,18 +13,15 @@ app.post("/completions", authMiddleware, async (c) => {
   let body: ChatCompletionRequest;
   try {
     body = await c.req.json();
-  } catch (error) {
+  } catch (_error) {
     throw new ValidationError("Invalid JSON in request body");
   }
 
   const apiKey = c.get("apiKey");
 
-  // Calculate tokens for rate limiting
-  const messageText = extractAllMessageText(body.messages ?? []);
-  const tokenCount = calculateTokens(messageText, body.model);
-
-  // Apply rate limiting with token count
-  const rateLimitMiddleware = createRateLimitMiddleware(tokenCount);
+  const rateLimitMiddleware = createRateLimitMiddleware(
+    calculateChatRequestTokens(body),
+  );
   await rateLimitMiddleware(c, async () => {});
 
   const chatHandler = new ChatHandler(c.env);

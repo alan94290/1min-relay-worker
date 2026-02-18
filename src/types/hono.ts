@@ -1,4 +1,4 @@
-import { Env } from "./index";
+import type { Env } from "./index";
 
 export type HonoEnv = {
   Bindings: Env;
@@ -22,7 +22,7 @@ export interface AuthContext {
   validated: boolean;
 }
 
-export interface ApiError {
+export interface ApiErrorResponse {
   error: string;
   code?: string;
   details?: Record<string, unknown>;

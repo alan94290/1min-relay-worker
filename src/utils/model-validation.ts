@@ -3,15 +3,12 @@
  * Throws typed errors instead of returning error Responses
  */
 
-import { Env, Message } from "../types";
-import {
-  parseAndValidateModel,
-  processMessagesWithImageCheck,
-} from "./message-processing";
-import { WebSearchConfig } from "./model-parser";
-import { ValidationError, ModelNotFoundError } from "./errors";
-import { supportsVision } from "./model-capabilities";
 import { ALL_ONE_MIN_AVAILABLE_MODELS } from "../constants";
+import type { Env, Message } from "../types";
+import { ModelNotFoundError, ValidationError } from "./errors";
+import { processMessagesWithImageCheck } from "./message-processing";
+import { supportsVision } from "./model-capabilities";
+import { parseAndGetConfig, type WebSearchConfig } from "./model-parser";
 
 export interface ValidatedModel {
   cleanModel: string;
@@ -29,7 +26,7 @@ export function validateModelAndMessages(
   env: Env,
 ): ValidatedModel {
   // Parse model name and get web search configuration
-  const parseResult = parseAndValidateModel(rawModel, env);
+  const parseResult = parseAndGetConfig(rawModel, env);
   if (parseResult.error) {
     throw new ValidationError(parseResult.error, "model", "model_not_found");
   }

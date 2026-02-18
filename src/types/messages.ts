@@ -22,7 +22,3 @@ export interface Message {
   content: MessageContent;
   name?: string;
 }
-
-export interface ProcessedMessage extends Message {
-  content: MessageContent;
-}

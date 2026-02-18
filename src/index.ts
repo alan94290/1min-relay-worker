@@ -1,10 +1,10 @@
 import { Hono } from "hono";
-import { HonoEnv } from "./types/hono";
 import { corsMiddleware } from "./middleware/cors";
 import { errorHandler } from "./middleware/error-handler";
+import apiRoutes from "./routes/api";
 // Logger middleware removed for production
 import rootRoutes from "./routes/root";
-import apiRoutes from "./routes/api";
+import type { HonoEnv } from "./types/hono";
 
 const app = new Hono<HonoEnv>();
 

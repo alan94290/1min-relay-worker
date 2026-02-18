@@ -2,108 +2,60 @@
  * Image generation endpoint handler
  */
 
-import {
-  Env,
+import { DEFAULT_IMAGE_MODEL, IMAGE_GENERATION_MODELS } from "../constants";
+import type {
   ImageGenerationRequest,
-  OneMinImageResponse,
   ImageGenerationResponse,
+  OneMinImageResponse,
 } from "../types";
-import { OneMinApiService } from "../services";
-import { createErrorResponse, createSuccessResponse } from "../utils";
-import { IMAGE_GENERATION_MODELS, DEFAULT_IMAGE_MODEL } from "../constants";
+import { ApiError, createSuccessResponse, ValidationError } from "../utils";
+import { BaseTextHandler } from "./base";
 
-export class ImageHandler {
-  private env: Env;
-  private apiService: OneMinApiService;
-
-  constructor(env: Env) {
-    this.env = env;
-    this.apiService = new OneMinApiService(env);
-  }
-
+export class ImageHandler extends BaseTextHandler {
   async handleImageGeneration(
     request: Request,
     apiKey?: string,
   ): Promise<Response> {
-    try {
-      const requestBody: ImageGenerationRequest = await request.json();
+    const requestBody: ImageGenerationRequest = await request.json();
 
-      // Validate required fields
-      if (!requestBody.prompt) {
-        return createErrorResponse("Prompt field is required");
-      }
-
-      // Set default model if not provided (matching Python version)
-      const model = requestBody.model || DEFAULT_IMAGE_MODEL;
-
-      // Validate model supports image generation
-      if (!IMAGE_GENERATION_MODELS.includes(model)) {
-        return createErrorResponse(
-          `Model '${model}' does not support image generation`,
-          400,
-          "invalid_request_error",
-          "model_not_supported",
-        );
-      }
-
-      const requestBodyForAPI = this.apiService.buildImageRequestBody(
-        requestBody.prompt,
-        model,
-        requestBody.n,
-        requestBody.size,
-      );
-
-      try {
-        const data = await this.apiService.sendImageRequest(
-          requestBodyForAPI,
-          apiKey,
-        );
-
-        // Transform response to OpenAI format
-        const openAIResponse = this.transformToOpenAIFormat(data, requestBody);
-        return createSuccessResponse(openAIResponse);
-      } catch (error) {
-        console.error("Image generation API error:", error);
-
-        // Check if it's a specific API error
-        if (error instanceof Error) {
-          if (error.message.includes("1min.ai API error")) {
-            return createErrorResponse(
-              `Image generation failed: ${error.message}`,
-              500,
-              "api_error",
-            );
-          }
-          if (error.message.includes("No image URLs found")) {
-            return createErrorResponse(
-              "Image generation completed but no images were returned",
-              500,
-              "no_images_error",
-            );
-          }
-        }
-
-        return createErrorResponse(
-          "Failed to generate image",
-          500,
-          "internal_error",
-        );
-      }
-    } catch (error) {
-      console.error("Image generation error:", error);
-      return createErrorResponse("Internal server error", 500);
+    if (!requestBody.prompt) {
+      throw new ValidationError("Prompt field is required", "prompt");
     }
+
+    const model = requestBody.model || DEFAULT_IMAGE_MODEL;
+
+    if (!IMAGE_GENERATION_MODELS.includes(model)) {
+      throw new ValidationError(
+        `Model '${model}' does not support image generation`,
+        "model",
+        "model_not_supported",
+      );
+    }
+
+    const requestBodyForAPI = this.apiService.buildImageRequestBody(
+      requestBody.prompt,
+      model,
+      requestBody.n,
+      requestBody.size,
+    );
+
+    const data = await this.apiService.sendImageRequest(
+      requestBodyForAPI,
+      apiKey,
+    );
+
+    const openAIResponse = this.transformToOpenAIFormat(data, requestBody);
+    return createSuccessResponse(openAIResponse);
   }
 
   private transformToOpenAIFormat(
     data: OneMinImageResponse,
-    originalRequest: ImageGenerationRequest,
+    _originalRequest: ImageGenerationRequest,
   ): ImageGenerationResponse {
-    // Use resultObject from the API response (matching Python version)
     const imageUrls = data.aiRecord?.aiRecordDetail?.resultObject;
 
     if (!imageUrls || !Array.isArray(imageUrls) || imageUrls.length === 0) {
-      throw new Error("No image URLs found in API response");
+      throw new ApiError("No image URLs found in API response", 500);
     }
 
     return {

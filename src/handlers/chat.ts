@@ -2,165 +2,123 @@
  * Chat completions endpoint handler
  */
 
-import {
-  Message,
-  ChatCompletionResponse,
-  OneMinChatResponse,
+import { DEFAULT_MODEL } from "../constants";
+import type {
   ChatCompletionRequest,
+  ChatCompletionResponse,
+  Message,
+  OneMinChatResponse,
 } from "../types";
 import {
-  createErrorResponse,
   createSuccessResponse,
-  createErrorResponseFromError,
-  WebSearchConfig,
+  extractOneMinContent,
+  ValidationError,
   validateModelAndMessages,
+  type WebSearchConfig,
 } from "../utils";
 import {
   createOpenAISSEChunk,
-  writeSSEEvent,
   writeSSEDone,
+  writeSSEEvent,
 } from "../utils/sse";
 import { executeStreamingPipeline } from "../utils/streaming";
-import { DEFAULT_MODEL } from "../constants";
 import { BaseTextHandler } from "./base";
 
 export class ChatHandler extends BaseTextHandler {
-  async handleChatCompletions(request: Request): Promise<Response> {
-    try {
-      const requestBody: ChatCompletionRequest = await request.json();
-      return await this.handleChatCompletionsWithBody(requestBody, "");
-    } catch (error) {
-      console.error("Chat completion error:", error);
-      return createErrorResponseFromError(error);
-    }
-  }
-
   async handleChatCompletionsWithBody(
     requestBody: ChatCompletionRequest,
     apiKey: string,
   ): Promise<Response> {
-    try {
-      // Validate required fields
-      if (!requestBody.messages || !Array.isArray(requestBody.messages)) {
-        return createErrorResponse(
-          "Messages field is required and must be an array",
-        );
-      }
+    if (!requestBody.messages || !Array.isArray(requestBody.messages)) {
+      throw new ValidationError(
+        "Messages field is required and must be an array",
+        "messages",
+      );
+    }
 
-      const rawModel = requestBody.model || DEFAULT_MODEL;
+    const rawModel = requestBody.model || DEFAULT_MODEL;
 
-      const { cleanModel, webSearchConfig, processedMessages } =
-        validateModelAndMessages(
-          rawModel,
-          requestBody.messages as Message[],
-          this.env,
-        );
+    const { cleanModel, webSearchConfig, processedMessages } =
+      validateModelAndMessages(
+        rawModel,
+        requestBody.messages as Message[],
+        this.env,
+      );
 
-      // Handle streaming vs non-streaming
-      if (requestBody.stream) {
-        return this.handleStreamingChat(
-          processedMessages,
-          cleanModel,
-          requestBody.temperature,
-          requestBody.max_tokens,
-          apiKey,
-          webSearchConfig,
-        );
-      } else {
-        return this.handleNonStreamingChat(
-          processedMessages,
-          cleanModel,
-          requestBody.temperature,
-          requestBody.max_tokens,
-          apiKey,
-          webSearchConfig,
-        );
-      }
-    } catch (error) {
-      console.error("Chat completion error:", error);
-      return createErrorResponseFromError(error);
+    if (requestBody.stream) {
+      return this.handleStreamingChat(
+        processedMessages,
+        cleanModel,
+        apiKey,
+        requestBody.temperature,
+        requestBody.max_tokens,
+        webSearchConfig,
+      );
+    } else {
+      return this.handleNonStreamingChat(
+        processedMessages,
+        cleanModel,
+        apiKey,
+        requestBody.temperature,
+        requestBody.max_tokens,
+        webSearchConfig,
+      );
     }
   }
 
   private async handleNonStreamingChat(
     messages: Message[],
     model: string,
+    apiKey: string,
     temperature?: number,
     maxTokens?: number,
-    apiKey?: string,
     webSearchConfig?: WebSearchConfig,
   ): Promise<Response> {
-    try {
-      const requestBody = await this.apiService.buildChatRequestBody(
-        messages,
-        model,
-        apiKey || "",
-        temperature,
-        maxTokens,
-        webSearchConfig,
-      );
+    const data = await this.sendNonStreamingRequest(
+      messages,
+      model,
+      apiKey,
+      temperature,
+      maxTokens,
+      webSearchConfig,
+    );
 
-      const response = await this.apiService.sendChatRequest(
-        requestBody,
-        false,
-        apiKey,
-      );
-      const data = (await response.json()) as OneMinChatResponse;
-
-      const openAIResponse = this.transformToOpenAIFormat(data, model);
-      return createSuccessResponse(openAIResponse);
-    } catch (error) {
-      console.error("Non-streaming chat error:", error);
-      return createErrorResponse("Failed to process chat completion", 500);
-    }
+    const openAIResponse = this.transformToOpenAIFormat(data, model);
+    return createSuccessResponse(openAIResponse);
   }
 
   private async handleStreamingChat(
     messages: Message[],
     model: string,
+    apiKey: string,
     temperature?: number,
     maxTokens?: number,
-    apiKey?: string,
     webSearchConfig?: WebSearchConfig,
   ): Promise<Response> {
-    try {
-      const requestBody = await this.apiService.buildChatRequestBody(
-        messages,
-        model,
-        apiKey || "",
-        temperature,
-        maxTokens,
-        webSearchConfig,
-      );
+    const response = await this.sendStreamingRequest(
+      messages,
+      model,
+      apiKey,
+      temperature,
+      maxTokens,
+      webSearchConfig,
+    );
 
-      const response = await this.apiService.sendChatRequest(
-        requestBody,
-        true,
-        apiKey,
-      );
-
-      return executeStreamingPipeline(response, {
-        onChunk: async (writer, chunk) => {
-          const returnChunk = createOpenAISSEChunk(
-            model,
-            { content: chunk },
-            null,
-          );
-          await writeSSEEvent(writer, returnChunk);
-        },
-        onEnd: async (writer) => {
-          const finalChunk = createOpenAISSEChunk(model, {}, "stop");
-          await writeSSEEvent(writer, finalChunk);
-          await writeSSEDone(writer);
-        },
-      });
-    } catch (error) {
-      console.error("Streaming chat error:", error);
-      return createErrorResponse(
-        "Failed to process streaming chat completion",
-        500,
-      );
-    }
+    return executeStreamingPipeline(response, {
+      onChunk: async (writer, chunk) => {
+        const returnChunk = createOpenAISSEChunk(
+          model,
+          { content: chunk },
+          null,
+        );
+        await writeSSEEvent(writer, returnChunk);
+      },
+      onEnd: async (writer) => {
+        const finalChunk = createOpenAISSEChunk(model, {}, "stop");
+        await writeSSEEvent(writer, finalChunk);
+        await writeSSEDone(writer);
+      },
+    });
   }
 
   private transformToOpenAIFormat(
@@ -177,10 +135,7 @@ export class ChatHandler extends BaseTextHandler {
           index: 0,
           message: {
             role: "assistant",
-            content:
-              data.aiRecord?.aiRecordDetail?.resultObject?.[0] ||
-              data.content ||
-              "No response generated",
+            content: extractOneMinContent(data),
           },
           finish_reason: "stop",
         },

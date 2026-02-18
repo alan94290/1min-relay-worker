@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { HonoEnv } from "../types/hono";
+import type { HonoEnv } from "../types/hono";
 
 const app = new Hono<HonoEnv>();
 

@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.8.0] - 2026-02-18
+
+### Added
+- **GitHub Actions CI**: Added `.github/workflows/ci.yml` workflow
+  - Runs on push to `main` and pull requests
+  - Lint, format check, and TypeScript type check steps
+- **Biome Linter**: New `npm run lint` and `npm run check` scripts for linting and comprehensive code checks
+
+### Changed
+- **Migrated from Prettier to Biome**: Replaced Prettier with Biome for formatting, linting, and import sorting
+  - Formatting defaults match Prettier (2-space indent, 80 line width, double quotes)
+  - Enabled recommended lint rules and automatic import organization
+  - `npm run format` now runs `biome check --write src/`
+- **Code quality fixes** (auto-applied by Biome linter):
+  - Replaced `isNaN()` with `Number.isNaN()` for type-safe NaN checks
+  - Replaced string concatenation with template literals
+  - Simplified conditions with optional chaining (`?.`)
+  - Removed useless `case` clause before `default` in switch statement
+  - Prefixed intentionally unused parameters with `_`
+  - Replaced non-null assertions with type predicates and guard checks
+
+### Removed
+- **Prettier**: Removed `prettier` dev dependency
+
 ## [3.7.1] - 2026-02-09
 
 ### Changed

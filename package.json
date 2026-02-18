@@ -1,13 +1,15 @@
 {
   "name": "1min-relay-worker",
-  "version": "3.7.1",
+  "version": "3.8.0",
   "description": "Cloudflare Worker implementation of 1min-relay",
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc",
     "dev": "wrangler dev",
     "deploy": "wrangler deploy --minify",
-    "format": "prettier --write 'src/**/*.{ts,js}'",
+    "format": "biome check --write src/",
+    "lint": "biome lint src/",
+    "check": "biome check src/",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
@@ -20,10 +22,10 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "@biomejs/biome": "2.4.2",
     "@cloudflare/workers-types": "^4.20250701.0",
     "@types/node": "^24.10.1",
     "@types/service-worker-mock": "^2.0.4",
-    "prettier": "^3.6.2",
     "typescript": "^5.9.3",
     "wrangler": "^4.24.3"
   },

@@ -3,24 +3,24 @@
  * Handles requests in Anthropic SDK format and returns Anthropic-compatible responses
  */
 
-import {
-  Message,
-  OneMinChatResponse,
+import { DEFAULT_MODEL } from "../constants";
+import type {
+  AnthropicContentBlock,
+  AnthropicMessage,
   AnthropicMessageRequest,
   AnthropicMessageResponse,
   AnthropicTextContent,
-  AnthropicContentBlock,
-  AnthropicMessage,
+  Message,
+  OneMinChatResponse,
 } from "../types";
 import {
-  WebSearchConfig,
-  validateModelAndMessages,
   calculateTokens,
   estimateInputTokens,
+  extractOneMinContent,
   ValidationError,
-  ApiError,
+  validateModelAndMessages,
+  type WebSearchConfig,
 } from "../utils";
-import { CORS_HEADERS, DEFAULT_MODEL } from "../constants";
 import { writeSSEEventWithType } from "../utils/sse";
 import { executeStreamingPipeline } from "../utils/streaming";
 import { BaseTextHandler } from "./base";
@@ -140,38 +140,25 @@ export class MessagesHandler extends BaseTextHandler {
     apiKey: string,
     webSearchConfig?: WebSearchConfig,
   ): Promise<Response> {
-    try {
-      const requestBody = await this.apiService.buildChatRequestBody(
-        messages,
-        model,
-        apiKey,
-        originalRequest.temperature,
-        originalRequest.max_tokens,
-        webSearchConfig,
-      );
+    const data = await this.sendNonStreamingRequest(
+      messages,
+      model,
+      apiKey,
+      originalRequest.temperature,
+      originalRequest.max_tokens,
+      webSearchConfig,
+    );
 
-      const response = await this.apiService.sendChatRequest(
-        requestBody,
-        false,
-        apiKey,
-      );
-      const data = (await response.json()) as OneMinChatResponse;
+    const anthropicResponse = this.transformToAnthropicFormat(
+      data,
+      model,
+      messages,
+    );
 
-      // Transform to Anthropic format
-      const anthropicResponse = this.transformToAnthropicFormat(
-        data,
-        model,
-        messages,
-      );
-
-      return new Response(JSON.stringify(anthropicResponse), {
-        status: 200,
-        headers: { "Content-Type": "application/json", ...CORS_HEADERS },
-      });
-    } catch (error) {
-      console.error("Non-streaming message error:", error);
-      throw new ApiError("Failed to process message", 500);
-    }
+    return new Response(JSON.stringify(anthropicResponse), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
   }
 
   private async handleStreamingMessage(
@@ -181,87 +168,76 @@ export class MessagesHandler extends BaseTextHandler {
     apiKey: string,
     webSearchConfig?: WebSearchConfig,
   ): Promise<Response> {
-    try {
-      const requestBody = await this.apiService.buildChatRequestBody(
-        messages,
-        model,
-        apiKey,
-        originalRequest.temperature,
-        originalRequest.max_tokens,
-        webSearchConfig,
-      );
+    const response = await this.sendStreamingRequest(
+      messages,
+      model,
+      apiKey,
+      originalRequest.temperature,
+      originalRequest.max_tokens,
+      webSearchConfig,
+    );
 
-      const response = await this.apiService.sendChatRequest(
-        requestBody,
-        true,
-        apiKey,
-      );
+    const messageId = `msg_${crypto.randomUUID().replace(/-/g, "").slice(0, 20)}`;
 
-      const messageId = `msg_${crypto.randomUUID().replace(/-/g, "").slice(0, 20)}`;
+    return executeStreamingPipeline(response, {
+      onStart: async (writer) => {
+        // Send message_start event
+        const messageStart: AnthropicMessageResponse = {
+          id: messageId,
+          type: "message",
+          role: "assistant",
+          content: [],
+          model,
+          stop_reason: null,
+          stop_sequence: null,
+          usage: {
+            input_tokens: estimateInputTokens(messages),
+            output_tokens: 0,
+          },
+        };
+        await writeSSEEventWithType(writer, "message_start", {
+          type: "message_start",
+          message: messageStart,
+        });
 
-      return executeStreamingPipeline(response, {
-        onStart: async (writer) => {
-          // Send message_start event
-          const messageStart: AnthropicMessageResponse = {
-            id: messageId,
-            type: "message",
-            role: "assistant",
-            content: [],
-            model,
-            stop_reason: null,
-            stop_sequence: null,
-            usage: {
-              input_tokens: estimateInputTokens(messages),
-              output_tokens: 0,
-            },
-          };
-          await writeSSEEventWithType(writer, "message_start", {
-            type: "message_start",
-            message: messageStart,
-          });
+        // Send content_block_start
+        await writeSSEEventWithType(writer, "content_block_start", {
+          type: "content_block_start",
+          index: 0,
+          content_block: { type: "text", text: "" },
+        });
 
-          // Send content_block_start
-          await writeSSEEventWithType(writer, "content_block_start", {
-            type: "content_block_start",
-            index: 0,
-            content_block: { type: "text", text: "" },
-          });
+        // Send ping
+        await writeSSEEventWithType(writer, "ping", { type: "ping" });
+      },
+      onChunk: async (writer, chunk) => {
+        await writeSSEEventWithType(writer, "content_block_delta", {
+          type: "content_block_delta",
+          index: 0,
+          delta: { type: "text_delta", text: chunk },
+        });
+      },
+      onEnd: async (writer, accumulatedContent) => {
+        // Send content_block_stop
+        await writeSSEEventWithType(writer, "content_block_stop", {
+          type: "content_block_stop",
+          index: 0,
+        });
 
-          // Send ping
-          await writeSSEEventWithType(writer, "ping", { type: "ping" });
-        },
-        onChunk: async (writer, chunk) => {
-          await writeSSEEventWithType(writer, "content_block_delta", {
-            type: "content_block_delta",
-            index: 0,
-            delta: { type: "text_delta", text: chunk },
-          });
-        },
-        onEnd: async (writer, accumulatedContent) => {
-          // Send content_block_stop
-          await writeSSEEventWithType(writer, "content_block_stop", {
-            type: "content_block_stop",
-            index: 0,
-          });
+        // Send message_delta with stop reason and usage
+        const outputTokens = calculateTokens(accumulatedContent, model);
+        await writeSSEEventWithType(writer, "message_delta", {
+          type: "message_delta",
+          delta: { stop_reason: "end_turn" },
+          usage: { output_tokens: outputTokens },
+        });
 
-          // Send message_delta with stop reason and usage
-          const outputTokens = calculateTokens(accumulatedContent, model);
-          await writeSSEEventWithType(writer, "message_delta", {
-            type: "message_delta",
-            delta: { stop_reason: "end_turn" },
-            usage: { output_tokens: outputTokens },
-          });
-
-          // Send message_stop
-          await writeSSEEventWithType(writer, "message_stop", {
-            type: "message_stop",
-          });
-        },
-      });
-    } catch (error) {
-      console.error("Streaming message error:", error);
-      throw new ApiError("Failed to process streaming message", 500);
-    }
+        // Send message_stop
+        await writeSSEEventWithType(writer, "message_stop", {
+          type: "message_stop",
+        });
+      },
+    });
   }
 
   private transformToAnthropicFormat(
@@ -269,10 +245,7 @@ export class MessagesHandler extends BaseTextHandler {
     model: string,
     messages: Message[],
   ): AnthropicMessageResponse {
-    const content =
-      data.aiRecord?.aiRecordDetail?.resultObject?.[0] ||
-      data.content ||
-      "No response generated";
+    const content = extractOneMinContent(data);
 
     const inputTokens =
       data.usage?.prompt_tokens || estimateInputTokens(messages);

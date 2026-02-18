@@ -2,7 +2,7 @@
  * Image processing utilities
  */
 
-import { MessageContent, TextContent, ImageContent } from "../types";
+import type { ImageContent, MessageContent, TextContent } from "../types";
 
 /**
  * Checks if URL is an image URL
@@ -48,28 +48,13 @@ export function extractImageFromContent(
  * @returns Promise<ArrayBuffer> - Binary image data
  */
 export async function processImageUrl(imageUrl: string): Promise<ArrayBuffer> {
-  if (imageUrl.startsWith("data:image/png;base64,")) {
-    // Handle base64 encoded image (matching Python logic exactly)
+  if (imageUrl.startsWith("data:image/")) {
+    // Handle base64 encoded image (any image MIME type)
     const base64Data = imageUrl.split(",")[1];
     if (!base64Data) {
       throw new Error("Invalid base64 image format");
     }
 
-    // Convert base64 to binary (matching Python's base64.b64decode)
-    const binaryString = atob(base64Data);
-    const bytes = new Uint8Array(binaryString.length);
-    for (let i = 0; i < binaryString.length; i++) {
-      bytes[i] = binaryString.charCodeAt(i);
-    }
-    return bytes.buffer;
-  } else if (imageUrl.startsWith("data:image/")) {
-    // Handle other base64 image formats
-    const base64Data = imageUrl.split(",")[1];
-    if (!base64Data) {
-      throw new Error("Invalid base64 image format");
-    }
-
-    // Convert base64 to binary
     const binaryString = atob(base64Data);
     const bytes = new Uint8Array(binaryString.length);
     for (let i = 0; i < binaryString.length; i++) {
