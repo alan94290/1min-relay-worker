@@ -10,8 +10,8 @@ export const RATE_LIMIT_CONFIG = {
 };
 
 // Default model configuration
-export const DEFAULT_MODEL = "mistral-nemo";
-export const DEFAULT_IMAGE_MODEL = "flux-schnell";
+export const DEFAULT_MODEL = "open-mistral-nemo";
+export const DEFAULT_IMAGE_MODEL = "black-forest-labs/flux-schnell";
 
 // API endpoints
 export const API_ENDPOINTS = {

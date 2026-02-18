@@ -8,5 +8,6 @@ export * from "./env";
 export * from "./messages";
 export * from "./model-response";
 export * from "./onemin-api";
+export * from "./onemin-models";
 export * from "./requests";
 export * from "./responses";

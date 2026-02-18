@@ -2,7 +2,8 @@
  * Image generation endpoint handler
  */
 
-import { DEFAULT_IMAGE_MODEL, IMAGE_GENERATION_MODELS } from "../constants";
+import { DEFAULT_IMAGE_MODEL } from "../constants";
+import { isImageGenerationModel } from "../services/model-registry";
 import type {
   ImageGenerationRequest,
   ImageGenerationResponse,
@@ -24,7 +25,7 @@ export class ImageHandler extends BaseTextHandler {
 
     const model = requestBody.model || DEFAULT_IMAGE_MODEL;
 
-    if (!IMAGE_GENERATION_MODELS.includes(model)) {
+    if (!(await isImageGenerationModel(model, this.env))) {
       throw new ValidationError(
         `Model '${model}' does not support image generation`,
         "model",

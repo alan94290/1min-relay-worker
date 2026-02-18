@@ -7,6 +7,48 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.0.0] - 2026-02-18
+
+### Added
+- **Dynamic Model Registry**: Model data is now fetched live from the 1min.ai API instead of hardcoded lists
+  - Two-tier caching: in-memory (5 min TTL) + Cloudflare KV (1 hr TTL)
+  - Thundering herd protection via inflight promise deduplication
+  - Stale cache fallback when the upstream API is unavailable
+  - KV data shape validation to handle schema changes across deployments
+  - API response validation to surface unexpected response shapes
+- **Model Cache Warmup**: Non-blocking `waitUntil` warmup on every `/v1/*` request to pre-populate the cache
+- **`MODEL_CACHE` KV Namespace**: New KV binding for caching model data across Worker isolates
+- **`ONE_MIN_MODELS_API_URL` Environment Variable**: Configurable 1min.ai models API endpoint
+
+### Changed
+- **All model capability checks are now async** — `supportsVision()`, `supportsCodeInterpreter()`, `supportsImageGeneration()`, `getModelCapabilities()`, `validateModelCapabilities()`, `validateModelAndMessages()` now return Promises and require an `env` parameter
+- **`handleModelsEndpoint()` is now async** and takes an `env` parameter; capabilities are derived from the registry
+- **Web search support**: All chat models now support `:online` suffix — removed per-model validation
+- **Model parser**: Removed `colonCount > 1` early rejection so future model IDs containing colons are handled correctly
+- **Default models updated** to match 1min.ai API model IDs:
+  - `DEFAULT_MODEL`: `mistral-nemo` → `open-mistral-nemo`
+  - `DEFAULT_IMAGE_MODEL`: `flux-schnell` → `black-forest-labs/flux-schnell`
+- **Optimized `getModelCapabilities()`**: Single `getModelData()` call instead of 4 parallel calls
+- **Optimized `validateModelAndMessages()`**: Single `getModelData()` call for model existence + vision check
+
+### Removed
+- **`src/constants/models.ts`** — Deleted entirely (227 lines of hardcoded model lists)
+  - `ALL_ONE_MIN_AVAILABLE_MODELS`, `VISION_SUPPORTED_MODELS`, `CODE_INTERPRETER_SUPPORTED_MODELS`, `RETRIEVAL_SUPPORTED_MODELS`, `IMAGE_GENERATION_MODELS`, `VARIATION_SUPPORTED_MODELS`, `TEXT_TO_SPEECH_MODELS`, `SPEECH_TO_TEXT_MODELS`
+- **`supportsRetrieval()`** — All chat models support web search via request body settings
+- **`supportsTextToSpeech()` / `supportsSpeechToText()`** — No TTS/STT endpoints exposed
+- **`validateModelSupportsWebSearch()`** — No longer needed; any chat model accepts `:online`
+
+### Breaking Changes
+- **Model IDs now come from the 1min.ai API** — some IDs have changed (e.g., `flux-schnell` → `black-forest-labs/flux-schnell`). Clients must use the IDs returned by `GET /v1/models`.
+- **Capability check functions are now async** — callers must `await` them
+- **`handleModelsEndpoint()` signature changed** — now requires `env` parameter
+- **Models not listed in the API are no longer available** — xAI (Grok), Perplexity (Sonar), and some OpenAI reasoning models are not currently exposed by the 1min.ai models API
+
+### Migration Guide
+1. Create a new KV namespace: `wrangler kv:namespace create "MODEL_CACHE"`
+2. Add the KV binding and `ONE_MIN_MODELS_API_URL` to `wrangler.jsonc`
+3. Update any hardcoded model IDs in client code to match `GET /v1/models` output
+
 ## [3.8.0] - 2026-02-18
 
 ### Added

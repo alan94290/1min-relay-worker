@@ -40,12 +40,17 @@
     "ONE_MIN_CONVERSATION_API_URL": "https://api.1min.ai/api/conversations",
     "ONE_MIN_CONVERSATION_API_STREAMING_URL": "https://api.1min.ai/api/features?isStreaming=true",
     "ONE_MIN_ASSET_URL": "https://api.1min.ai/api/assets",
+    "ONE_MIN_MODELS_API_URL": "https://api.1min.ai/models",
   },
 
   "kv_namespaces": [
     {
       "binding": "RATE_LIMIT_STORE",
-      "id": "[your-kv-namespace-id]", // IMPORTANT: Change this to your KV namespace ID
+      "id": "RATE_LIMIT_STORE_KV_ID", // IMPORTANT: Change this to your KV namespace ID
+    },
+    {
+      "binding": "MODEL_CACHE",
+      "id": "MODEL_CACHE_KV_ID", // IMPORTANT: Change this to your KV namespace ID
     },
   ],
 
