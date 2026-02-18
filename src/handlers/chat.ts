@@ -39,7 +39,7 @@ export class ChatHandler extends BaseTextHandler {
     const rawModel = requestBody.model || DEFAULT_MODEL;
 
     const { cleanModel, webSearchConfig, processedMessages } =
-      validateModelAndMessages(
+      await validateModelAndMessages(
         rawModel,
         requestBody.messages as Message[],
         this.env,

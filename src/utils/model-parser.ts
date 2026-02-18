@@ -2,7 +2,6 @@
  * Model name parser for handling :online suffix functionality
  */
 
-import { RETRIEVAL_SUPPORTED_MODELS } from "../constants/models";
 import type { Env } from "../types";
 
 export interface ModelParseResult {
@@ -24,6 +23,7 @@ const DEFAULT_MAX_WORD = 500;
 
 /**
  * Parse model name and detect :online suffix
+ * All chat models support web search, so no model-specific validation needed.
  */
 export function parseModelName(modelName: string): ModelParseResult {
   if (!modelName || typeof modelName !== "string") {
@@ -37,18 +37,7 @@ export function parseModelName(modelName: string): ModelParseResult {
 
   const trimmedModel = modelName.trim();
 
-  // Check for multiple colons (invalid format)
-  const colonCount = (trimmedModel.match(/:/g) || []).length;
-  if (colonCount > 1) {
-    return {
-      originalModel: "",
-      hasOnlineSuffix: false,
-      isValid: false,
-      error: "Invalid model name format. Only ':online' suffix is supported",
-    };
-  }
-
-  // Check if model has :online suffix
+  // Check if model has :online suffix (check this first, before rejecting colons)
   if (trimmedModel.endsWith(ONLINE_SUFFIX)) {
     const originalModel = trimmedModel.slice(0, -ONLINE_SUFFIX.length);
 
@@ -62,16 +51,6 @@ export function parseModelName(modelName: string): ModelParseResult {
       };
     }
 
-    // Check if the original model supports web search
-    if (!validateModelSupportsWebSearch(originalModel)) {
-      return {
-        originalModel,
-        hasOnlineSuffix: true,
-        isValid: false,
-        error: `Model '${originalModel}' does not support web search functionality`,
-      };
-    }
-
     return {
       originalModel,
       hasOnlineSuffix: true,
@@ -79,7 +58,7 @@ export function parseModelName(modelName: string): ModelParseResult {
     };
   }
 
-  // Check for invalid suffix (colon present but not :online)
+  // Check for unsupported colon suffix (not :online)
   if (trimmedModel.includes(":")) {
     return {
       originalModel: "",
@@ -117,13 +96,6 @@ export function getWebSearchConfig(env?: Partial<Env>): WebSearchConfig {
         : numOfSite,
     maxWord: Number.isNaN(maxWord) || maxWord <= 0 ? DEFAULT_MAX_WORD : maxWord,
   };
-}
-
-/**
- * Check if a model supports web search functionality
- */
-export function validateModelSupportsWebSearch(model: string): boolean {
-  return RETRIEVAL_SUPPORTED_MODELS.includes(model);
 }
 
 /**

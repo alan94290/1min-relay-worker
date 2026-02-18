@@ -10,43 +10,20 @@ A TypeScript implementation of the 1min.ai API relay service, designed to run on
 - **OpenAI Responses API**: Structured outputs with JSON objects, JSON schema, and reasoning effort control
 - **Distributed Rate Limiting**: Uses Cloudflare KV for consistent rate limiting across multiple worker instances
 - **Accurate Token Counting**: Integrated with `gpt-tokenizer` for precise token calculation across all models
-- **65+ AI Models**: Supports all latest models including GPT-4o, Claude 3.5, Mistral, Flux, Leonardo.ai, Qwen, and more
+- **Dynamic Model List**: Model data fetched live from the 1min.ai API with two-tier caching (in-memory + KV), always up to date
 - **Streaming Support**: Real-time streaming responses for chat completions
 - **TypeScript**: Full type safety and modern development experience
 - **Vision Support**: Supports image input for vision models
 
 ## Supported Models
 
-### Text Generation Models
+Model data is fetched dynamically from the 1min.ai API and cached with a two-tier strategy (in-memory 5 min, KV 1 hr). The `GET /v1/models` endpoint always returns the latest available models. Use it to see the full list:
 
-- **OpenAI**: gpt-5, gpt-5-mini, gpt-5-nano, gpt-5-chat-latest, gpt-5.1, gpt-5.1-codex, gpt-5.1-codex-mini, gpt-5.2, gpt-5.2-pro, o1, o1-mini, o3-mini, o4-mini, gpt-4.5-preview, gpt-4.1, gpt-4.1-nano, gpt-4.1-mini, gpt-4o, gpt-4-turbo, gpt-3.5-turbo, openai/gpt-oss-20b, openai/gpt-oss-120b, and more
-- **Claude**: claude-3-5-sonnet, claude-3-5-haiku, claude-3-7-sonnet, claude-sonnet-4, claude-opus-4, claude-haiku-4-5, claude-sonnet-4-5, claude-opus-4-5, claude-3-opus, claude-3-haiku
-- **MistralAI**: mistral-large-latest, mistral-small-latest, pixtral-12b
-- **GoogleAI**: gemini-1.5-pro, gemini-1.5-flash, gemini-2.0-flash, gemini-2.0-flash-lite, gemini-2.5-flash, gemini-2.5-pro, gemini-2.5-flash-preview-05-20, gemini-2.5-flash-preview-04-17, gemini-2.5-pro-preview-05-06, gemini-3-pro-preview
-- **DeepSeek**: deepseek-chat, deepseek-reasoner
-- **Meta**: llama-2-70b-chat, meta-llama-3.1-405b-instruct, llama-4-maverick-instruct, llama-4-scout-instruct
-- **xAI**: grok-2, grok-3, grok-3-mini, grok-4-0709, grok-4-fast-reasoning, grok-4-fast-non-reasoning
-- **Perplexity Sonar**: sonar-reasoning-pro, sonar-reasoning, sonar-pro, sonar
+```bash
+curl https://your-worker.your-subdomain.workers.dev/v1/models
+```
 
-### Vision Models (Image Input Support)
-
-- **OpenAI**: gpt-5, gpt-5-mini, gpt-5-chat-latest, gpt-4o, gpt-4o-mini, gpt-4-turbo
-- **xAI**: grok-4-fast-reasoning, grok-4-fast-non-reasoning
-
-### Image Generation Models
-
-- **DALL-E**: dall-e-2, dall-e-3
-- **Midjourney**: midjourney, midjourney_6_1
-- **Leonardo.ai**: phoenix, lightning-xl, anime-xl, diffusion-xl, kino-xl, vision-xl, albedo-base-xl
-- **Flux**: flux-schnell, flux-dev, flux-pro, flux-1.1-pro
-- **Qwen**: qwen-image-plus, qwen-image-max, qwen-image-edit-plus
-- **Stable Diffusion**: stable-diffusion-xl-1024-v1-0, stable-diffusion-v1-6
-
-### Speech Models
-
-- **Speech-to-Text**: whisper-1, qwen3-asr-flash
-- **Text-to-Speech**: tts-1, tts-1-hd, qwen3-tts-flash
-- **Translation**: qwen3-livetranslate-flash
+Capabilities such as vision, code interpreter, and web search are derived automatically from the API response — no hardcoded model lists.
 
 ## API Endpoints
 
@@ -246,19 +223,24 @@ ONE_MIN_CONVERSATION_API_STREAMING_URL = "https://api.1min.ai/api/features?isStr
 ONE_MIN_ASSET_URL = "https://api.1min.ai/api/assets"
 ```
 
-4. Create KV namespace for rate limiting:
+4. Create KV namespaces:
 
 ```bash
 wrangler kv:namespace create "RATE_LIMIT_STORE"
+wrangler kv:namespace create "MODEL_CACHE"
 ```
 
-5. After running the command above, you'll receive a KV namespace ID. Copy this ID and replace `[your-kv-namespace-id]` in your `wrangler.jsonc` or `wrangler.toml` file:
+5. After running the commands above, you'll receive a KV namespace ID for each. Copy the IDs and update `wrangler.jsonc`:
 
 ```jsonc
 "kv_namespaces": [
   {
     "binding": "RATE_LIMIT_STORE",
-    "id": "your-kv-namespace-id-here" // Replace this with the ID from step 4
+    "id": "your-rate-limit-kv-id-here"
+  },
+  {
+    "binding": "MODEL_CACHE",
+    "id": "your-model-cache-kv-id-here"
   }
 ]
 ```
@@ -335,10 +317,12 @@ The following environment variables are configured in `wrangler.jsonc`:
 - `ONE_MIN_CONVERSATION_API_URL`: 1min.ai conversation API endpoint
 - `ONE_MIN_CONVERSATION_API_STREAMING_URL`: 1min.ai streaming API endpoint
 - `ONE_MIN_ASSET_URL`: 1min.ai asset API endpoint
+- `ONE_MIN_MODELS_API_URL`: 1min.ai models API endpoint (for dynamic model list)
 
-### KV Namespace
+### KV Namespaces
 
 - `RATE_LIMIT_STORE`: Used for distributed rate limiting storage
+- `MODEL_CACHE`: Used for caching model data fetched from the 1min.ai API (1 hour TTL)
 
 ## Usage Examples
 
@@ -404,7 +388,7 @@ The worker is built with:
 
 - **TypeScript**: For type safety and better development experience
 - **Cloudflare Workers**: Serverless edge computing platform
-- **Cloudflare KV**: Distributed key-value storage for rate limiting
+- **Cloudflare KV**: Distributed key-value storage for rate limiting and model data caching
 - **gpt-tokenizer**: Accurate token counting for all supported models
 
 ## Rate Limiting Implementation

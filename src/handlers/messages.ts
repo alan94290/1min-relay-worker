@@ -48,7 +48,7 @@ export class MessagesHandler extends BaseTextHandler {
     );
 
     const { cleanModel, webSearchConfig, processedMessages } =
-      validateModelAndMessages(rawModel, internalMessages, this.env);
+      await validateModelAndMessages(rawModel, internalMessages, this.env);
 
     // Handle streaming vs non-streaming
     if (requestBody.stream) {

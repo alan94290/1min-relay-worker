@@ -11,8 +11,8 @@ import type {
 } from "../types";
 import { processImageUrl, uploadImageToAsset } from "../utils/image";
 import { extractTextFromMessageContent } from "../utils/message-processing";
-import { supportsVision } from "../utils/model-capabilities";
 import type { WebSearchConfig } from "../utils/model-parser";
+import { isVisionModel } from "./model-registry";
 
 // Helper function to format conversation for the API
 // Converts message array to format expected by 1min.ai API
@@ -194,7 +194,7 @@ export class OneMinApiService {
           hasImageRequests = true;
 
           // Check if model supports vision inputs
-          if (!supportsVision(model)) {
+          if (!(await isVisionModel(model, this.env))) {
             throw new Error(`Model '${model}' does not support image inputs`);
           }
 

@@ -8,8 +8,12 @@ export interface Env {
   ONE_MIN_CONVERSATION_API_STREAMING_URL: string;
   ONE_MIN_ASSET_URL: string;
 
-  // KV Namespace for rate limiting
+  // Models API URL
+  ONE_MIN_MODELS_API_URL: string;
+
+  // KV Namespaces
   RATE_LIMIT_STORE?: KVNamespace;
+  MODEL_CACHE?: KVNamespace;
 
   // Authentication token for API access
   AUTH_TOKEN?: string;

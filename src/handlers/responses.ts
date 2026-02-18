@@ -64,7 +64,7 @@ export class ResponseHandler extends BaseTextHandler {
     const rawModel = requestBody.model || DEFAULT_MODEL;
 
     const { cleanModel, webSearchConfig, processedMessages } =
-      validateModelAndMessages(rawModel, messages, this.env);
+      await validateModelAndMessages(rawModel, messages, this.env);
 
     if (requestBody.stream) {
       return this.handleStreamingResponse(
