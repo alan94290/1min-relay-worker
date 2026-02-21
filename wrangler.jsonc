@@ -46,11 +46,11 @@
   "kv_namespaces": [
     {
       "binding": "RATE_LIMIT_STORE",
-      "id": "RATE_LIMIT_STORE_KV_ID", // IMPORTANT: Change this to your KV namespace ID
+      "id": "10f47b11d3a54415a90405db8c84784b", // IMPORTANT: Change this to your KV namespace ID
     },
     {
       "binding": "MODEL_CACHE",
-      "id": "MODEL_CACHE_KV_ID", // IMPORTANT: Change this to your KV namespace ID
+      "id": "10f47b11d3a54415a90405db8c84784b", // IMPORTANT: Change this to your KV namespace ID
     },
   ],
 
