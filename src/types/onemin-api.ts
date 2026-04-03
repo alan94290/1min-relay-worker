@@ -11,6 +11,11 @@ export interface OneMinPromptObject {
   maxWord?: number;
   n?: number;
   size?: string;
+  // Audio (Speech-to-Text / Audio Translator) fields
+  audioUrl?: string;
+  response_format?: string; // snake_case: matches 1min.ai API field name
+  temperature?: number;
+  language?: string;
 }
 
 export interface OneMinRequestBody {

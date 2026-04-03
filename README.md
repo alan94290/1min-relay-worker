@@ -6,7 +6,7 @@ A TypeScript implementation of the 1min.ai API relay service, designed to run on
 
 ## Features
 
-- **Complete API Relay**: Full compatibility with 1min.ai chat completions, responses, and image generation endpoints
+- **Complete API Relay**: Full compatibility with 1min.ai chat completions, responses, image generation, and audio transcription/translation endpoints
 - **OpenAI Responses API**: Structured outputs with JSON objects, JSON schema, and reasoning effort control
 - **Distributed Rate Limiting**: Uses Cloudflare KV for consistent rate limiting across multiple worker instances
 - **Accurate Token Counting**: Integrated with `gpt-tokenizer` for precise token calculation across all models
@@ -14,6 +14,7 @@ A TypeScript implementation of the 1min.ai API relay service, designed to run on
 - **Streaming Support**: Real-time streaming responses for chat completions
 - **TypeScript**: Full type safety and modern development experience
 - **Vision Support**: Supports image input for vision models
+- **Audio Transcription & Translation**: OpenAI Whisper-compatible speech-to-text and audio translation endpoints
 
 ## Supported Models
 
@@ -162,6 +163,59 @@ curl -X POST http://localhost:8787/v1/responses \
 POST /v1/images/generations
 ```
 
+### Audio Transcription (Speech-to-Text)
+
+```
+POST /v1/audio/transcriptions
+```
+
+Transcribe audio to text using Whisper or Google Speech models. Accepts `multipart/form-data`.
+
+```bash
+curl -X POST http://localhost:8787/v1/audio/transcriptions \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -F "file=@audio.mp3" \
+  -F "model=whisper-1"
+```
+
+**Parameters:**
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `file` | File | Yes | Audio file (mp3, mp4, m4a, wav, webm, ogg, flac). Max 25MB. |
+| `model` | string | Yes | Model ID (e.g., `whisper-1`, `latest_long`, `latest_short`) |
+| `language` | string | No | Language hint (ISO-639-1 for Whisper, BCP-47 for Google Speech) |
+| `prompt` | string | No | Prompt to guide transcription style |
+| `response_format` | string | No | `json` (default), `text`, `verbose_json`, `srt`, `vtt` |
+| `temperature` | number | No | 0–1 sampling temperature |
+
+**OpenAI SDK:**
+
+```python
+from openai import OpenAI
+client = OpenAI(base_url="http://localhost:8787/v1", api_key="YOUR_API_KEY")
+transcript = client.audio.transcriptions.create(
+    model="whisper-1",
+    file=open("audio.mp3", "rb"),
+)
+print(transcript.text)
+```
+
+### Audio Translation
+
+```
+POST /v1/audio/translations
+```
+
+Translate audio to English text. Same parameters as transcription (except `language`).
+
+```bash
+curl -X POST http://localhost:8787/v1/audio/translations \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -F "file=@foreign-audio.mp3" \
+  -F "model=whisper-1"
+```
+
 ### List Models
 
 ```
@@ -179,6 +233,8 @@ Returns information about all available endpoints:
 - Chat Completions: `/v1/chat/completions`
 - Responses: `/v1/responses`
 - Image Generation: `/v1/images/generations`
+- Audio Transcription: `/v1/audio/transcriptions`
+- Audio Translation: `/v1/audio/translations`
 - Models: `/v1/models`
 
 ## Rate Limiting
@@ -367,6 +423,16 @@ curl -X POST https://your-worker.your-subdomain.workers.dev/v1/images/generation
     "n": 1,
     "size": "1024x1024"
   }'
+```
+
+### Audio Transcription
+
+```bash
+curl -X POST https://your-worker.your-subdomain.workers.dev/v1/audio/transcriptions \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -F "file=@recording.mp3" \
+  -F "model=whisper-1" \
+  -F "response_format=text"
 ```
 
 ### Streaming Chat

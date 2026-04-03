@@ -2,6 +2,7 @@
  * Export all handlers from a single entry point
  */
 
+export * from "./audio";
 export * from "./base";
 export * from "./chat";
 export * from "./images";

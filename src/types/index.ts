@@ -4,6 +4,7 @@
 
 export * from "./anthropic";
 export * from "./api-responses";
+export * from "./audio";
 export * from "./env";
 export * from "./messages";
 export * from "./model-response";

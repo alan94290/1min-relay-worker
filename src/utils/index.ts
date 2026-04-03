@@ -2,6 +2,7 @@
  * Export all utilities from a single entry point
  */
 
+export * from "./audio";
 export * from "./errors";
 export * from "./image";
 export * from "./message-processing";

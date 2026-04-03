@@ -2,13 +2,16 @@
  * 1min.ai API service layer
  */
 
+import { WHISPER_MODEL_IDS } from "../constants/config";
 import type {
   Env,
   Message,
+  OneMinChatResponse,
   OneMinImageResponse,
   OneMinPromptObject,
   OneMinRequestBody,
 } from "../types";
+import { ApiError } from "../utils/errors";
 import { processImageUrl, uploadImageToAsset } from "../utils/image";
 import { extractTextFromMessageContent } from "../utils/message-processing";
 import type { WebSearchConfig } from "../utils/model-parser";
@@ -278,5 +281,106 @@ export class OneMinApiService {
         size: size ?? "1024x1024",
       },
     };
+  }
+
+  /**
+   * Google Speech models use `language` in promptObject;
+   * Whisper-1 uses `response_format` instead.
+   */
+  buildSpeechToTextRequestBody(
+    audioUrl: string,
+    model: string,
+    language?: string,
+    responseFormat?: string,
+    prompt?: string,
+    temperature?: number,
+  ): OneMinRequestBody {
+    const isWhisperModel = WHISPER_MODEL_IDS.has(model);
+
+    const promptObject: OneMinPromptObject = {
+      prompt: prompt ?? "",
+      audioUrl,
+    };
+
+    if (isWhisperModel) {
+      promptObject.response_format = responseFormat ?? "text";
+      if (language) {
+        promptObject.language = language;
+      }
+      if (temperature !== undefined) {
+        promptObject.temperature = temperature;
+      }
+    } else {
+      // Google Speech models use language instead of response_format/temperature
+      if (language) {
+        promptObject.language = language;
+      }
+    }
+
+    return {
+      type: "SPEECH_TO_TEXT",
+      model,
+      promptObject,
+    };
+  }
+
+  buildAudioTranslatorRequestBody(
+    audioUrl: string,
+    model: string,
+    responseFormat?: string,
+    temperature?: number,
+    prompt?: string,
+  ): OneMinRequestBody {
+    const promptObject: OneMinPromptObject = {
+      prompt: prompt ?? "",
+      audioUrl,
+    };
+
+    // Only Whisper models support response_format and temperature
+    if (WHISPER_MODEL_IDS.has(model)) {
+      promptObject.response_format = responseFormat ?? "text";
+      if (temperature !== undefined) {
+        promptObject.temperature = temperature;
+      }
+    }
+
+    return {
+      type: "AUDIO_TRANSLATOR",
+      model,
+      promptObject,
+    };
+  }
+
+  async sendAudioRequest(
+    requestBody: OneMinRequestBody,
+    apiKey?: string,
+  ): Promise<OneMinChatResponse> {
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+    };
+
+    if (apiKey) {
+      headers["API-KEY"] = apiKey;
+    }
+
+    const response = await fetch(
+      `${this.env.ONE_MIN_API_URL}?isStreaming=false`,
+      {
+        method: "POST",
+        headers,
+        body: JSON.stringify(requestBody),
+      },
+    );
+
+    if (!response.ok) {
+      const rawError = await response.text().catch(() => "(unreadable)");
+      console.error("=== 1MIN.AI AUDIO API ERROR ===", rawError.slice(0, 500));
+      throw new ApiError(
+        `1min.ai API error: ${response.status} ${response.statusText}`,
+        response.status,
+      );
+    }
+
+    return (await response.json()) as OneMinChatResponse;
   }
 }

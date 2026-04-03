@@ -7,6 +7,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.1.0] - 2026-03-02
+
+### Added
+- **Audio Transcription API** (`POST /v1/audio/transcriptions`): OpenAI Whisper-compatible speech-to-text endpoint
+  - Accepts multipart/form-data with audio file upload
+  - Supports `whisper-1` and Google Speech models (`latest_long`, `latest_short`, `phone_call`, `telephony`, `telephony_short`, `medical_dictation`, `medical_conversation`)
+  - Supports `response_format` options: `json`, `text`, `srt`, `verbose_json`, `vtt`
+  - Supports `language`, `prompt`, and `temperature` parameters
+  - File size limit: 25MB (matching OpenAI's limit)
+  - Supported formats: mp3, mp4, m4a, wav, webm, ogg, flac
+- **Audio Translation API** (`POST /v1/audio/translations`): OpenAI-compatible audio translation endpoint
+  - Translates audio to English text via 1min.ai's `AUDIO_TRANSLATOR` feature
+  - Same file format and size constraints as transcription
+- **OpenAI SDK Compatibility**: Both audio endpoints work with the official OpenAI Python/JS SDK (`client.audio.transcriptions.create()`)
+- **Speech Model Registry**: Dynamic speech model fetching from 1min.ai API with hardcoded fallback list
+  - New `isSpeechModel()` function for model validation
+  - `isValidModel()` now also checks speech models
+  - `speechModelIds` added to cached model data (backward-compatible with existing KV cache)
+- **Audio File Validation**: Input validation for file size, MIME type, response_format, and temperature range
+- **Audio Asset Upload**: Uploads audio files to 1min.ai asset API before transcription (same pattern as image upload)
+
+### Changed
+- **Model Registry**: `fetchAndProcess()` now fetches `SPEECH_TO_TEXT` models in parallel with chat and image models (with graceful fallback on failure)
+- **OneMinPromptObject**: Extended with `audioUrl`, `response_format`, `temperature`, and `language` fields for audio features
+- **API Endpoints**: Added `AUDIO_TRANSCRIPTIONS` and `AUDIO_TRANSLATIONS` to endpoint constants
+
+### Technical Details
+- New files: `src/types/audio.ts`, `src/utils/audio.ts`, `src/handlers/audio.ts`, `src/routes/audio.ts`
+- `WHISPER_MODEL_IDS` constant distinguishes Whisper vs Google Speech models for correct `promptObject` construction
+- Error responses use `ApiError` with upstream status code propagation
+- Log output truncated to 500 chars (aligned with `sendChatRequest` pattern)
+- `request.formData()` parsing wrapped in try/catch for proper 400 error on non-multipart requests
+
 ## [4.0.1] - 2026-03-01
 
 ### Fixed

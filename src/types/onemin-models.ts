@@ -21,6 +21,7 @@ export interface CachedModelData {
   imageModelIds: string[];
   visionModelIds: string[];
   codeInterpreterModelIds: string[];
+  speechModelIds?: string[];
   entries: OneMinModelEntry[];
   fetchedAt: number;
 }
